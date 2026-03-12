@@ -33,6 +33,7 @@ fun VerseItem(
     isExpanded: Boolean,
     footnotes: List<Footnote>,
     onClick: () -> Unit,
+    textSizeSp: Float = 17f,
     modifier: Modifier = Modifier
 ) {
     val isClickable = verse.hasFootnotes
@@ -85,8 +86,8 @@ fun VerseItem(
         Text(
             text = verseText,
             style = MaterialTheme.typography.bodyLarge.copy(
-                fontSize = 17.sp,
-                lineHeight = 30.sp
+                fontSize = textSizeSp.sp,
+                lineHeight = (textSizeSp * 1.75f).sp
             ),
             color = MaterialTheme.colorScheme.onBackground
         )
