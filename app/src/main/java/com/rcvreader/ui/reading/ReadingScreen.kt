@@ -1,5 +1,6 @@
 package com.rcvreader.ui.reading
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -60,105 +61,61 @@ fun ReadingScreen(
                 .fillMaxSize()
                 .padding(padding)
         ) {
-            // Previous / Next chapter links
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 8.dp),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                uiState.previousChapter?.let { (book, chapter) ->
-                    TextButton(
-                        onClick = { viewModel.navigateTo(book.id, chapter) }
-                    ) {
-                        Text(
-                            "\u2190 ${book.name} $chapter",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.secondary
-                        )
-                    }
-                } ?: Spacer(Modifier.width(1.dp))
-
-                uiState.nextChapter?.let { (book, chapter) ->
-                    TextButton(
-                        onClick = { viewModel.navigateTo(book.id, chapter) }
-                    ) {
-                        Text(
-                            "${book.name} $chapter \u2192",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.secondary
-                        )
-                    }
-                } ?: Spacer(Modifier.width(1.dp))
-            }
-
             // Navigation trigger bar
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                    .padding(top = 12.dp, bottom = 4.dp),
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Book button
-                Surface(
-                    onClick = {
+                // Book name — plain text, tappable
+                Text(
+                    text = currentBook?.name ?: "",
+                    style = MaterialTheme.typography.titleLarge.copy(
+                        fontFamily = androidx.compose.ui.text.font.FontFamily.Serif,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 22.sp
+                    ),
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.clickable {
                         sheetInitialTab = 0
                         sheetOpen = true
-                    },
-                    shape = RoundedCornerShape(12.dp),
-                    color = MaterialTheme.colorScheme.surface
-                ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = currentBook?.name ?: "",
-                            style = MaterialTheme.typography.titleLarge.copy(
-                                fontWeight = FontWeight.SemiBold
-                            ),
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                        Spacer(Modifier.width(6.dp))
-                        Text(
-                            text = "\u25BE",
-                            fontSize = 12.sp,
-                            color = GoldAccent
-                        )
                     }
-                }
+                )
 
-                Spacer(Modifier.width(8.dp))
+                Spacer(Modifier.width(10.dp))
 
-                // Chapter button
+                // Chapter pill
                 Surface(
                     onClick = {
                         sheetInitialTab = 1
                         sheetOpen = true
                     },
-                    shape = RoundedCornerShape(12.dp),
+                    shape = RoundedCornerShape(8.dp),
                     color = MaterialTheme.colorScheme.surface
                 ) {
                     Row(
-                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "$currentChapter",
-                            style = MaterialTheme.typography.titleLarge.copy(
-                                fontWeight = FontWeight.SemiBold
+                            text = "Ch. $currentChapter",
+                            style = MaterialTheme.typography.bodyMedium.copy(
+                                fontWeight = FontWeight.Medium
                             ),
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                        Spacer(Modifier.width(6.dp))
-                        Text(
-                            text = "\u25BE",
-                            fontSize = 12.sp,
-                            color = MaterialTheme.colorScheme.secondary
+                            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.55f)
                         )
                     }
                 }
+
+                Spacer(Modifier.width(4.dp))
+
+                Text(
+                    text = "\u25BE",
+                    fontSize = 11.sp,
+                    color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.6f)
+                )
             }
 
             // Verse list
@@ -167,6 +124,7 @@ fun ReadingScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f)
+                    .padding(top = 8.dp)
             ) {
                 items(
                     items = uiState.verses,

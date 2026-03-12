@@ -16,6 +16,8 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.BaselineShift
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -57,29 +59,35 @@ fun VerseItem(
                 if (isClickable) Modifier.clickable { onClick() }
                 else Modifier
             )
-            .padding(horizontal = 16.dp, vertical = 6.dp)
+            .padding(horizontal = 20.dp, vertical = 14.dp)
     ) {
         val verseText = buildAnnotatedString {
             withStyle(
                 SpanStyle(
                     color = MaterialTheme.colorScheme.secondary,
-                    fontSize = 10.sp
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Normal,
+                    baselineShift = BaselineShift.Superscript
                 )
             ) {
-                append("${verse.verseNumber} ")
+                append("${verse.verseNumber}")
             }
+            append("  ")
             append(verse.text)
             if (verse.hasFootnotes) {
-                append(" ")
-                withStyle(SpanStyle(color = VerseDotColor, fontSize = 8.sp)) {
-                    append("\u25CF")
+                append("  ")
+                withStyle(SpanStyle(color = VerseDotColor, fontSize = 9.sp)) {
+                    append("\u2022")
                 }
             }
         }
 
         Text(
             text = verseText,
-            style = MaterialTheme.typography.bodyLarge,
+            style = MaterialTheme.typography.bodyLarge.copy(
+                fontSize = 18.sp,
+                lineHeight = 32.sp
+            ),
             color = MaterialTheme.colorScheme.onBackground
         )
 
