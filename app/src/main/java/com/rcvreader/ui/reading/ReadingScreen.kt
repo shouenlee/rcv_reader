@@ -29,6 +29,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
@@ -186,12 +187,18 @@ private fun GradientChip(
     Box(
         modifier = modifier
             .drawBehind {
-                drawRect(
+                // Draw an oval larger than the chip bounds so the gradient
+                // fades to transparent in all directions with no hard edge.
+                val rx = size.width * 0.25f
+                val ry = size.height * 0.6f
+                drawOval(
                     brush = Brush.radialGradient(
                         colors = listOf(bg, Color.Transparent),
                         center = Offset(size.width / 2f, size.height / 2f),
-                        radius = maxOf(size.width, size.height) * 0.85f
-                    )
+                        radius = maxOf(size.width + rx * 2f, size.height + ry * 2f) / 2f
+                    ),
+                    topLeft = Offset(-rx, -ry),
+                    size = Size(size.width + rx * 2f, size.height + ry * 2f)
                 )
             }
             .clickable(onClick = onClick),
