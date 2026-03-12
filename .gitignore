@@ -14,8 +14,9 @@ local.properties
 # OS
 .DS_Store
 
-# Superpowers
-.superpowers/
+# Raw Bible data (source files for bible.db generation)
+Verses/
+Footnotes/
 
 # Python
 __pycache__/
