@@ -42,13 +42,14 @@ fun NavigationBottomSheet(
     currentBook: Book?,
     selectedBook: Book?,
     currentChapter: Int,
+    initialTab: Int = 0,
     onBookSelected: (Book) -> Unit,
     onChapterSelected: (Int) -> Unit,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    var selectedTab by remember { mutableIntStateOf(0) }
+    var selectedTab by remember { mutableIntStateOf(initialTab) }
 
     val activeBook = selectedBook ?: currentBook
 

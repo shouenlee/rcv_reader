@@ -20,6 +20,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -42,6 +43,7 @@ fun ReadingScreen(
     val listState = rememberLazyListState()
 
     var sheetOpen by remember { mutableStateOf(false) }
+    var sheetInitialTab by remember { mutableIntStateOf(0) }
 
     val currentBook = uiState.currentBook
     val currentChapter = uiState.currentChapter
@@ -80,13 +82,17 @@ fun ReadingScreen(
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically
             ) {
+                // Book button
                 Surface(
-                    onClick = { sheetOpen = true },
+                    onClick = {
+                        sheetInitialTab = 0
+                        sheetOpen = true
+                    },
                     shape = RoundedCornerShape(12.dp),
                     color = MaterialTheme.colorScheme.surface
                 ) {
                     Row(
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
@@ -96,25 +102,42 @@ fun ReadingScreen(
                             ),
                             color = MaterialTheme.colorScheme.primary
                         )
-                        Spacer(Modifier.width(10.dp))
-                        Surface(
-                            shape = RoundedCornerShape(6.dp),
-                            color = MaterialTheme.colorScheme.background
-                        ) {
-                            Text(
-                                text = "Ch. $currentChapter",
-                                style = MaterialTheme.typography.bodyMedium.copy(
-                                    fontWeight = FontWeight.Medium
-                                ),
-                                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
-                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
-                            )
-                        }
-                        Spacer(Modifier.width(8.dp))
+                        Spacer(Modifier.width(6.dp))
                         Text(
                             text = "\u25BE",
                             fontSize = 12.sp,
                             color = GoldAccent
+                        )
+                    }
+                }
+
+                Spacer(Modifier.width(8.dp))
+
+                // Chapter button
+                Surface(
+                    onClick = {
+                        sheetInitialTab = 1
+                        sheetOpen = true
+                    },
+                    shape = RoundedCornerShape(12.dp),
+                    color = MaterialTheme.colorScheme.surface
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "$currentChapter",
+                            style = MaterialTheme.typography.titleLarge.copy(
+                                fontWeight = FontWeight.SemiBold
+                            ),
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        Spacer(Modifier.width(6.dp))
+                        Text(
+                            text = "\u25BE",
+                            fontSize = 12.sp,
+                            color = MaterialTheme.colorScheme.secondary
                         )
                     }
                 }
@@ -173,6 +196,7 @@ fun ReadingScreen(
             currentBook = uiState.currentBook,
             selectedBook = uiState.pendingBook,
             currentChapter = uiState.currentChapter,
+            initialTab = sheetInitialTab,
             onBookSelected = { book ->
                 viewModel.selectBook(book)
             },
