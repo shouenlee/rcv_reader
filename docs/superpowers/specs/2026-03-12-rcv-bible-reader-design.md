@@ -13,18 +13,27 @@ An offline Android app for reading the Recovery Version (RCV) of the Bible with 
 
 ### Source Data
 
-- **Verses:** `Verses/{Book}/{Chapter}` — one file per chapter, all verses inside
-  - Format: `{verse_number}→{Book}. {Chapter}:{Verse} {verse_text}`
-- **Footnotes:** `Footnotes/{Book}/{Chapter}/{Verse}/{NoteNum}` — one file per footnote
-  - Format: `{number}→{Book}. {Chapter}:{Verse}.{NoteNum} - {keyword}: {footnote_text}`
-- 66 books, plain text, ASCII encoding
+- **Verses:** `Verses/{Book}/{Chapter}` — one file per chapter, one verse per line
+  - Four format variants across 66 books:
+    - `Book. Ch:V text` — e.g., `Gen. 1:1 In the beginning...` (29 books)
+    - `Book Ch:V text` (no period) — e.g., `1 Chron. 1:1 Adam, Seth...` (31 books)
+    - `Book.Ch:V text` (no space before chapter) — e.g., `Neh.1:1 The words of...` (1 book)
+    - `Book V text` (single-chapter books, no chapter number) — e.g., `Jude 1 Jude, a slave...` (5 books: 2John, 3John, Jude, Obad, Philemon)
+  - **Import strategy:** Do NOT parse the line prefix to determine book identity. Derive book from the folder path. Derive chapter from the filename. Parse verse number as the line number (1-indexed) within the file. Verse text is extracted by stripping the reference prefix (everything up to and including the `{Verse} ` or `{Chapter}:{Verse} ` pattern).
+  - **Note:** `Verses/Makefile` exists at the root — import script must skip non-directory entries.
+- **Footnotes:** `Footnotes/{Book}/{Chapter}/{Verse}/{NoteNum}` — one file per footnote, single line
+  - Format: `{reference} - {keyword}: {footnote_text}`
+  - Example: `Gen. 1:1.1 - In: The Bible, composed of two testaments...`
+  - Parse by: split on ` - ` to separate reference from body, then split body on first `:` to get keyword and content. If no ` - ` separator found, keyword is NULL and entire content stored as-is.
+  - **Psalms superscriptions:** ~42 footnote files at `Footnotes/Psa/{Ch}/0/{*|**}` where verse=0 (superscription) and note number is `*` or `**` (not integer). These lack the ` - ` separator. Store with `verse_number=0`, `footnote_number=0`, keyword=NULL, entire content in the content column.
+- 66 books, plain text, UTF-8 encoding
 
 ### Database Schema
 
 ```sql
 CREATE TABLE books (
     id INTEGER PRIMARY KEY,          -- 1-66, canonical order
-    abbreviation TEXT NOT NULL,      -- "Gen", "Matt" (matches folder names)
+    abbreviation TEXT NOT NULL,      -- "Gen", "Matt" (= folder name, canonical key)
     name TEXT NOT NULL,              -- "Genesis", "Matthew"
     testament TEXT NOT NULL,         -- "OT" or "NT"
     chapter_count INTEGER NOT NULL   -- 50, 28, etc.
@@ -45,7 +54,7 @@ CREATE TABLE footnotes (
     chapter INTEGER NOT NULL,
     verse_number INTEGER NOT NULL,
     footnote_number INTEGER NOT NULL,   -- ordering within a verse
-    keyword TEXT NOT NULL,              -- "In", "beginning", "deep"
+    keyword TEXT,                       -- "In", "beginning", "deep" (NULL if no keyword prefix)
     content TEXT NOT NULL               -- full footnote text
 );
 
@@ -61,19 +70,22 @@ CREATE VIRTUAL TABLE footnotes_fts USING fts5(keyword, content, content=footnote
 ### Key Decisions
 
 - **`has_footnotes` on verses** — avoids a JOIN to show the dot indicator on the reading screen
-- **FTS5 tables created now** — zero runtime cost, ready for future search feature
-- **`keyword` column** — extracted from footnote prefix (e.g., "In:" → "In"), useful for search and display
+- **FTS5 tables created empty** — zero runtime cost, ready for future search. Requires explicit rebuild when search feature is added.
+- **`keyword` column** — extracted from footnote prefix by splitting on ` - ` then first `:` (e.g., "Gen. 1:1.1 - In: ..." → "In"). Nullable for footnotes that lack keyword format.
 - **Canonical `books.id`** — 1=Genesis through 66=Revelation, drives sort order everywhere
 
 ### Build-Time Import
 
 A Python script (`buildscripts/import_bible_data.py`) runs during the build process:
-1. Reads all files from `Verses/` and `Footnotes/` directories
-2. Parses the `→` delimited format
-3. Strips the reference prefix from verse text (e.g., "Gen. 1:1 " removed, keeping only the verse body)
-4. Extracts keyword from footnote text (text before the first `:`)
-5. Writes a `bible.db` SQLite file
-6. The `.db` file is placed in `app/src/main/assets/` and bundled in the APK
+1. Iterates `Verses/` directory entries, **skipping non-directories** (e.g., `Makefile`)
+2. **Book identity** derived from folder name (e.g., `Gen`, `1Chron`, `SOS`), NOT from line prefixes. A hardcoded mapping in the script maps folder names → canonical order (1-66), full names, and testament.
+3. **Chapter** derived from the filename within the book folder (e.g., file `1` = chapter 1)
+4. **Verse number** derived from line number (1-indexed) within the chapter file
+5. **Verse text** extracted by stripping the reference prefix — uses a regex that handles all four format variants (with/without period, with/without chapter number for single-chapter books)
+6. **Footnotes:** derives book/chapter/verse/note-number from the directory path (`Footnotes/{Book}/{Ch}/{V}/{N}`). Splits file content on ` - ` then first `:` for keyword extraction. Psalms superscriptions (verse=0, note=`*`/`**`) stored with verse_number=0, footnote_number=0, keyword=NULL.
+7. Sets `has_footnotes` flag on verses by checking if `Footnotes/{Book}/{Ch}/{V}/` directory exists
+8. Writes `bible.db` to `app/src/main/assets/`
+9. FTS5 tables created empty — `INSERT INTO verses_fts(verses_fts) VALUES('rebuild')` to be added when search is implemented
 
 ---
 
@@ -119,6 +131,7 @@ app/
 - **Database:** Room (wrapping SQLite)
 - **Async:** Kotlin Coroutines + Flow
 - **State:** ViewModel + StateFlow
+- **Preferences:** SharedPreferences for last-read position (book + chapter)
 - **No DI framework** — manual construction, appropriate for single-screen app
 - **Min SDK:** 26 (Android 8.0)
 
@@ -185,7 +198,7 @@ app/
 │  ▎ earth was the beginning  │
 │  ▎ of time...               │
 │  ▎                          │
-│  ▎ +3 more footnotes        │  ← or show all, TBD based on length
+│  ▎ (all footnotes shown)    │  ← always show all footnotes for the verse
 │  └──────────────────────────│
 │                             │
 │  ² But the earth became...  │  ← next verse pushed down
@@ -250,7 +263,7 @@ app/
 5. Expanding a different verse → previous one collapses (single expansion)
 
 ### Tapping a Verse (without footnotes)
-- No response — no visual feedback
+- No response — no visual feedback, does not collapse any currently expanded verse
 
 ### Book/Chapter Navigation
 1. Tap book dropdown → scrollable grid of 66 books (OT/NT sections)
