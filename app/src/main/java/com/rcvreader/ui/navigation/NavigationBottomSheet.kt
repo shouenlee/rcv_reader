@@ -28,6 +28,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -61,7 +62,7 @@ fun NavigationBottomSheet(
         dragHandle = {
             Column(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Spacer(Modifier.height(12.dp))
                 Surface(
@@ -196,11 +197,11 @@ private fun BookGrid(
     onBookSelected: (Book) -> Unit
 ) {
     val rows = books.chunked(3)
-    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
         rows.forEach { rowBooks ->
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 rowBooks.forEach { book ->
                     val isSelected = book.id == currentBook?.id
@@ -223,19 +224,24 @@ private fun BookGrid(
                             BorderStroke(1.5.dp, GoldAccent)
                         } else null
                     ) {
-                        Text(
-                            text = book.abbreviation,
-                            style = MaterialTheme.typography.bodyMedium.copy(
-                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
-                            ),
-                            color = if (isSelected) {
-                                MaterialTheme.colorScheme.primary
-                            } else {
-                                MaterialTheme.colorScheme.onBackground
-                            },
-                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 11.dp),
-                            maxLines = 1
-                        )
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center,
+                            modifier = Modifier.padding(vertical = 12.dp, horizontal = 4.dp)
+                        ) {
+                            Text(
+                                text = book.abbreviation,
+                                style = MaterialTheme.typography.bodyMedium.copy(
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
+                                ),
+                                color = if (isSelected) {
+                                    MaterialTheme.colorScheme.primary
+                                } else {
+                                    MaterialTheme.colorScheme.onBackground
+                                },
+                                maxLines = 1
+                            )
+                        }
                     }
                 }
                 repeat(3 - rowBooks.size) {
@@ -286,7 +292,7 @@ private fun ChaptersPanel(
                     ) {
                         Column(
                             verticalArrangement = Arrangement.Center,
-                            horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally,
+                            horizontalAlignment = Alignment.CenterHorizontally,
                             modifier = Modifier.padding(4.dp)
                         ) {
                             Text(
