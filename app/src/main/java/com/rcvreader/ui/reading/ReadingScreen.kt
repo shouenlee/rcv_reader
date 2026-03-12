@@ -11,8 +11,10 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -25,10 +27,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.rcvreader.ui.navigation.BookPickerDropdown
-import com.rcvreader.ui.navigation.ChapterPickerDropdown
+import com.rcvreader.ui.navigation.NavigationBottomSheet
+import com.rcvreader.ui.theme.GoldAccent
 
 @Composable
 fun ReadingScreen(
@@ -38,8 +41,7 @@ fun ReadingScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val listState = rememberLazyListState()
 
-    var bookPickerExpanded by remember { mutableStateOf(false) }
-    var chapterPickerExpanded by remember { mutableStateOf(false) }
+    var sheetOpen by remember { mutableStateOf(false) }
 
     val currentBook = uiState.currentBook
     val currentChapter = uiState.currentChapter
@@ -70,7 +72,7 @@ fun ReadingScreen(
                 }
             }
 
-            // Toolbar with dropdowns
+            // Navigation trigger bar
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -78,39 +80,44 @@ fun ReadingScreen(
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                BookPickerDropdown(
-                    currentBook = uiState.currentBook,
-                    books = uiState.books,
-                    expanded = bookPickerExpanded,
-                    onToggle = {
-                        bookPickerExpanded = !bookPickerExpanded
-                        chapterPickerExpanded = false
-                    },
-                    onBookSelected = { book ->
-                        bookPickerExpanded = false
-                        chapterPickerExpanded = true
-                        viewModel.selectBook(book)
-                    }
-                )
-
-                Spacer(Modifier.width(8.dp))
-
-                ChapterPickerDropdown(
-                    currentChapter = uiState.currentChapter,
-                    chapterCount = uiState.currentBook?.chapterCount ?: 1,
-                    expanded = chapterPickerExpanded,
-                    onToggle = {
-                        chapterPickerExpanded = !chapterPickerExpanded
-                        bookPickerExpanded = false
-                    },
-                    onChapterSelected = { chapter ->
-                        chapterPickerExpanded = false
-                        val targetBook = uiState.pendingBook ?: uiState.currentBook
-                        targetBook?.let { book ->
-                            viewModel.navigateTo(book.id, chapter)
+                Surface(
+                    onClick = { sheetOpen = true },
+                    shape = RoundedCornerShape(12.dp),
+                    color = MaterialTheme.colorScheme.surface
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = currentBook?.name ?: "",
+                            style = MaterialTheme.typography.titleLarge.copy(
+                                fontWeight = FontWeight.SemiBold
+                            ),
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        Spacer(Modifier.width(10.dp))
+                        Surface(
+                            shape = RoundedCornerShape(6.dp),
+                            color = MaterialTheme.colorScheme.background
+                        ) {
+                            Text(
+                                text = "Ch. $currentChapter",
+                                style = MaterialTheme.typography.bodyMedium.copy(
+                                    fontWeight = FontWeight.Medium
+                                ),
+                                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                            )
                         }
+                        Spacer(Modifier.width(8.dp))
+                        Text(
+                            text = "\u25BE",
+                            fontSize = 12.sp,
+                            color = GoldAccent
+                        )
                     }
-                )
+                }
             }
 
             // Verse list
@@ -157,5 +164,28 @@ fun ReadingScreen(
                 }
             }
         }
+    }
+
+    // Bottom sheet
+    if (sheetOpen) {
+        NavigationBottomSheet(
+            books = uiState.books,
+            currentBook = uiState.currentBook,
+            selectedBook = uiState.pendingBook,
+            currentChapter = uiState.currentChapter,
+            onBookSelected = { book ->
+                viewModel.selectBook(book)
+            },
+            onChapterSelected = { chapter ->
+                sheetOpen = false
+                val targetBook = uiState.pendingBook ?: uiState.currentBook
+                targetBook?.let { book ->
+                    viewModel.navigateTo(book.id, chapter)
+                }
+            },
+            onDismiss = {
+                sheetOpen = false
+            }
+        )
     }
 }
