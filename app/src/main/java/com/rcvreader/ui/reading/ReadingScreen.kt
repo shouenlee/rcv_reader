@@ -50,9 +50,20 @@ import com.rcvreader.ui.settings.SettingsPanel
 import com.rcvreader.ui.settings.SettingsViewModel
 import com.rcvreader.ui.theme.GoldAccent
 
-// Fixed heights — drives both the nav layout and LazyColumn contentPadding
-private val NAV_EXPANDED_HEIGHT = 88.dp
-private val NAV_COMPACT_HEIGHT = 48.dp
+// Nav height constants.
+// ROW_HEIGHT:     height of each row (prev/next and book/chapter)
+// ROW_GAP:        gap between the two rows in expanded state (closes to 0 when compact)
+// BOTTOM_PADDING: space below book/chapter row, above the divider — constant in both states
+private val NAV_ROW_HEIGHT = 44.dp
+private val NAV_ROW_GAP = 6.dp
+private val NAV_BOTTOM_PADDING = 14.dp
+
+// Derived heights used for layout and LazyColumn contentPadding
+private val NAV_EXPANDED_HEIGHT = NAV_ROW_HEIGHT + NAV_ROW_GAP + NAV_ROW_HEIGHT + NAV_BOTTOM_PADDING
+private val NAV_COMPACT_HEIGHT = NAV_ROW_HEIGHT + NAV_BOTTOM_PADDING
+
+// Row 2 y-offset: lerp from (ROW_HEIGHT + GAP) → 0 as compactProgress goes 0 → 1
+private val NAV_ROW2_OFFSET_EXPANDED = NAV_ROW_HEIGHT + NAV_ROW_GAP
 
 @Composable
 fun ReadingScreen(
@@ -204,13 +215,8 @@ private fun AnimatedTopNav(
     modifier: Modifier = Modifier
 ) {
     val bgColor = MaterialTheme.colorScheme.background
-    val shrink = NAV_EXPANDED_HEIGHT - NAV_COMPACT_HEIGHT
     val navHeight = lerp(NAV_EXPANDED_HEIGHT, NAV_COMPACT_HEIGHT, compactProgress)
-
-    // Row 2 slides from y=shrink (expanded) to y=0 (compact).
-    // Math: row2Bottom = lerp(shrink, 0, p) + NAV_COMPACT_HEIGHT = lerp(expanded, compact, p) = navHeight
-    // So row 2's bottom always exactly touches the nav bottom — nothing clips.
-    val row2OffsetY: Dp = lerp(shrink, 0.dp, compactProgress)
+    val row2OffsetY: Dp = lerp(NAV_ROW2_OFFSET_EXPANDED, 0.dp, compactProgress)
 
     Box(
         modifier = modifier
@@ -218,12 +224,12 @@ private fun AnimatedTopNav(
             .background(bgColor)
             .clipToBounds()
     ) {
-        // Row 1: Prev / Next — stays at top, always visible
+        // Row 1: Prev / Next — stays fixed at top
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(NAV_COMPACT_HEIGHT)
-                .padding(horizontal = 8.dp),
+                .height(NAV_ROW_HEIGHT)
+                .padding(horizontal = 4.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -252,61 +258,57 @@ private fun AnimatedTopNav(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(NAV_COMPACT_HEIGHT)
+                .height(NAV_ROW_HEIGHT)
                 .offset(y = row2OffsetY),
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Book name — font shrinks from 22sp to 15sp
+            // Book name — font shrinks from 22sp → 15sp
             val bookFontSize = (22f - 7f * compactProgress).sp
-            Surface(
-                onClick = onBookClick,
-                color = bgColor,
-                shape = RoundedCornerShape(6.dp)
-            ) {
-                Text(
-                    text = uiState.currentBook?.name ?: "",
-                    fontSize = bookFontSize,
-                    fontFamily = FontFamily.Serif,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
-                )
-            }
+            Text(
+                text = uiState.currentBook?.name ?: "",
+                fontSize = bookFontSize,
+                fontFamily = FontFamily.Serif,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier
+                    .clickable(onClick = onBookClick)
+                    .padding(horizontal = 8.dp, vertical = 6.dp)
+            )
 
-            Spacer(Modifier.width(8.dp))
+            Spacer(Modifier.width(6.dp))
 
-            // Chapter pill — font shrinks from 14sp to 11sp
+            // Chapter pill — subtle, font shrinks 14sp → 11sp
             val chapterFontSize = (14f - 3f * compactProgress).sp
             Surface(
                 onClick = onChapterClick,
-                color = MaterialTheme.colorScheme.surface,
-                shape = RoundedCornerShape(6.dp)
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.06f),
+                shape = RoundedCornerShape(20.dp) // pill shape
             ) {
                 Row(
-                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp),
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
                         text = "Ch. ${uiState.currentChapter}",
                         fontSize = chapterFontSize,
                         fontWeight = FontWeight.Medium,
-                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.55f)
+                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f)
                     )
                     Spacer(Modifier.width(3.dp))
                     Text(
                         text = "\u25BE",
                         fontSize = 10.sp,
-                        color = GoldAccent.copy(alpha = 0.8f)
+                        color = GoldAccent.copy(alpha = 0.7f)
                     )
                 }
             }
         }
 
-        // Bottom divider
+        // Divider — NAV_BOTTOM_PADDING above it gives consistent breathing room
         HorizontalDivider(
             modifier = Modifier.align(Alignment.BottomCenter),
-            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.08f)
+            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.1f)
         )
     }
 }
