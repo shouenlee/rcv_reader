@@ -134,40 +134,15 @@ def parse_footnote_content(text):
 
 
 CREATE_TABLES_SQL = """
-CREATE TABLE IF NOT EXISTS books (
-    id INTEGER PRIMARY KEY,
-    abbreviation TEXT NOT NULL,
-    name TEXT NOT NULL,
-    testament TEXT NOT NULL,
-    chapter_count INTEGER NOT NULL
-);
+CREATE TABLE IF NOT EXISTS `books` (`id` INTEGER NOT NULL, `abbreviation` TEXT NOT NULL, `name` TEXT NOT NULL, `testament` TEXT NOT NULL, `chapter_count` INTEGER NOT NULL, PRIMARY KEY(`id`));
 
-CREATE TABLE IF NOT EXISTS verses (
-    id INTEGER PRIMARY KEY,
-    book_id INTEGER NOT NULL,
-    chapter INTEGER NOT NULL,
-    verse_number INTEGER NOT NULL,
-    text TEXT NOT NULL,
-    has_footnotes INTEGER NOT NULL DEFAULT 0,
-    FOREIGN KEY (book_id) REFERENCES books(id)
-);
+CREATE TABLE IF NOT EXISTS `verses` (`id` INTEGER NOT NULL, `book_id` INTEGER NOT NULL, `chapter` INTEGER NOT NULL, `verse_number` INTEGER NOT NULL, `text` TEXT NOT NULL, `has_footnotes` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`book_id`) REFERENCES `books`(`id`) ON UPDATE NO ACTION ON DELETE NO ACTION );
 
-CREATE TABLE IF NOT EXISTS footnotes (
-    id INTEGER PRIMARY KEY,
-    book_id INTEGER NOT NULL,
-    chapter INTEGER NOT NULL,
-    verse_number INTEGER NOT NULL,
-    footnote_number INTEGER NOT NULL,
-    keyword TEXT,
-    content TEXT NOT NULL,
-    FOREIGN KEY (book_id) REFERENCES books(id)
-);
+CREATE INDEX IF NOT EXISTS `idx_verses_lookup` ON `verses` (`book_id`, `chapter`);
 
-CREATE INDEX IF NOT EXISTS idx_verses_lookup ON verses(book_id, chapter);
-CREATE INDEX IF NOT EXISTS idx_footnotes_lookup ON footnotes(book_id, chapter, verse_number);
+CREATE TABLE IF NOT EXISTS `footnotes` (`id` INTEGER NOT NULL, `book_id` INTEGER NOT NULL, `chapter` INTEGER NOT NULL, `verse_number` INTEGER NOT NULL, `footnote_number` INTEGER NOT NULL, `keyword` TEXT, `content` TEXT NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`book_id`) REFERENCES `books`(`id`) ON UPDATE NO ACTION ON DELETE NO ACTION );
 
-CREATE VIRTUAL TABLE IF NOT EXISTS verses_fts USING fts5(text, content='verses', content_rowid='id');
-CREATE VIRTUAL TABLE IF NOT EXISTS footnotes_fts USING fts5(keyword, content, content='footnotes', content_rowid='id');
+CREATE INDEX IF NOT EXISTS `idx_footnotes_lookup` ON `footnotes` (`book_id`, `chapter`, `verse_number`);
 """
 
 

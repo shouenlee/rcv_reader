@@ -13,7 +13,7 @@ import androidx.room.PrimaryKey
         parentColumns = ["id"],
         childColumns = ["book_id"]
     )],
-    indices = [Index("book_id", "chapter")]
+    indices = [Index(value = ["book_id", "chapter"], name = "idx_verses_lookup")]
 )
 data class Verse(
     @PrimaryKey val id: Int,

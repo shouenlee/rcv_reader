@@ -13,7 +13,7 @@ import androidx.room.PrimaryKey
         parentColumns = ["id"],
         childColumns = ["book_id"]
     )],
-    indices = [Index("book_id", "chapter", "verse_number")]
+    indices = [Index(value = ["book_id", "chapter", "verse_number"], name = "idx_footnotes_lookup")]
 )
 data class Footnote(
     @PrimaryKey val id: Int,
