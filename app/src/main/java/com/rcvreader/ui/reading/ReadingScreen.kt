@@ -60,18 +60,36 @@ fun ReadingScreen(
                 .fillMaxSize()
                 .padding(padding)
         ) {
-            // Previous chapter link
-            uiState.previousChapter?.let { (book, chapter) ->
-                TextButton(
-                    onClick = { viewModel.navigateTo(book.id, chapter) },
-                    modifier = Modifier.padding(start = 8.dp)
-                ) {
-                    Text(
-                        "\u2190 ${book.name} $chapter",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.secondary
-                    )
-                }
+            // Previous / Next chapter links
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                uiState.previousChapter?.let { (book, chapter) ->
+                    TextButton(
+                        onClick = { viewModel.navigateTo(book.id, chapter) }
+                    ) {
+                        Text(
+                            "\u2190 ${book.name} $chapter",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.secondary
+                        )
+                    }
+                } ?: Spacer(Modifier.width(1.dp))
+
+                uiState.nextChapter?.let { (book, chapter) ->
+                    TextButton(
+                        onClick = { viewModel.navigateTo(book.id, chapter) }
+                    ) {
+                        Text(
+                            "${book.name} $chapter \u2192",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.secondary
+                        )
+                    }
+                } ?: Spacer(Modifier.width(1.dp))
             }
 
             // Navigation trigger bar
