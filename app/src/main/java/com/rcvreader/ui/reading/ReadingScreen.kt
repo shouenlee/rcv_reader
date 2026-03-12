@@ -1,5 +1,6 @@
 package com.rcvreader.ui.reading
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -8,6 +9,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
@@ -28,6 +30,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
@@ -174,6 +177,26 @@ fun ReadingScreen(
 }
 
 @Composable
+private fun NavChip(text: String, onClick: () -> Unit) {
+    Surface(
+        onClick = onClick,
+        shape = RoundedCornerShape(7.dp),
+        color = MaterialTheme.colorScheme.background,
+        border = androidx.compose.foundation.BorderStroke(
+            0.5.dp,
+            MaterialTheme.colorScheme.onBackground.copy(alpha = 0.12f)
+        )
+    ) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.secondary,
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
+        )
+    }
+}
+
+@Composable
 private fun FloatingNav(
     uiState: ReadingUiState,
     onPrevChapter: (com.rcvreader.data.model.Book, Int) -> Unit,
@@ -182,102 +205,120 @@ private fun FloatingNav(
     onChapterClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    androidx.compose.foundation.layout.Column(modifier = modifier) {
-        // Prev / Next row — transparent container, chips only where content exists
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 8.dp, vertical = 4.dp),
-            horizontalArrangement = Arrangement.SpaceBetween
+    val bgColor = MaterialTheme.colorScheme.background
+
+    Box(modifier = modifier) {
+        androidx.compose.foundation.layout.Column(
+            modifier = Modifier.fillMaxWidth()
         ) {
-            uiState.previousChapter?.let { (book, chapter) ->
-                Surface(
-                    onClick = { onPrevChapter(book, chapter) },
-                    shape = RoundedCornerShape(8.dp),
-                    color = MaterialTheme.colorScheme.surface,
-                    shadowElevation = 2.dp
-                ) {
-                    Text(
-                        text = "\u2190 ${book.name} $chapter",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.secondary,
-                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
-                    )
-                }
-            } ?: Spacer(Modifier.width(1.dp))
-
-            uiState.nextChapter?.let { (book, chapter) ->
-                Surface(
-                    onClick = { onNextChapter(book, chapter) },
-                    shape = RoundedCornerShape(8.dp),
-                    color = MaterialTheme.colorScheme.surface,
-                    shadowElevation = 2.dp
-                ) {
-                    Text(
-                        text = "${book.name} $chapter \u2192",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.secondary,
-                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
-                    )
-                }
-            } ?: Spacer(Modifier.width(1.dp))
-        }
-
-        // Book / Chapter row — transparent container, opaque individual buttons
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 8.dp),
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Book name button
-            Surface(
-                onClick = onBookClick,
-                shape = RoundedCornerShape(10.dp),
-                color = MaterialTheme.colorScheme.surface,
-                shadowElevation = 2.dp
+            // Solid background for the chips area
+            androidx.compose.foundation.layout.Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(bgColor)
             ) {
-                Text(
-                    text = uiState.currentBook?.name ?: "",
-                    style = MaterialTheme.typography.titleLarge.copy(
-                        fontFamily = FontFamily.Serif,
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = 22.sp
-                    ),
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp)
-                )
-            }
+                Spacer(Modifier.height(4.dp))
 
-            Spacer(Modifier.width(8.dp))
-
-            // Chapter pill
-            Surface(
-                onClick = onChapterClick,
-                shape = RoundedCornerShape(8.dp),
-                color = MaterialTheme.colorScheme.surface,
-                shadowElevation = 2.dp
-            ) {
+                // Prev / Next row
                 Row(
-                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 10.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        text = "Ch. ${uiState.currentChapter}",
-                        style = MaterialTheme.typography.bodyMedium.copy(
-                            fontWeight = FontWeight.Medium
-                        ),
-                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.55f)
-                    )
-                    Spacer(Modifier.width(4.dp))
-                    Text(
-                        text = "\u25BE",
-                        fontSize = 11.sp,
-                        color = GoldAccent.copy(alpha = 0.8f)
-                    )
+                    uiState.previousChapter?.let { (book, chapter) ->
+                        NavChip(
+                            text = "\u2190 ${book.name} $chapter",
+                            onClick = { onPrevChapter(book, chapter) }
+                        )
+                    } ?: Spacer(Modifier.width(1.dp))
+
+                    uiState.nextChapter?.let { (book, chapter) ->
+                        NavChip(
+                            text = "${book.name} $chapter \u2192",
+                            onClick = { onNextChapter(book, chapter) }
+                        )
+                    } ?: Spacer(Modifier.width(1.dp))
                 }
+
+                Spacer(Modifier.height(6.dp))
+
+                // Book / Chapter row
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Surface(
+                        onClick = onBookClick,
+                        shape = RoundedCornerShape(10.dp),
+                        color = MaterialTheme.colorScheme.surface,
+                        border = androidx.compose.foundation.BorderStroke(
+                            0.5.dp,
+                            MaterialTheme.colorScheme.onBackground.copy(alpha = 0.08f)
+                        ),
+                        shadowElevation = 1.dp
+                    ) {
+                        Text(
+                            text = uiState.currentBook?.name ?: "",
+                            style = MaterialTheme.typography.titleLarge.copy(
+                                fontFamily = FontFamily.Serif,
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 22.sp
+                            ),
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp)
+                        )
+                    }
+
+                    Spacer(Modifier.width(8.dp))
+
+                    Surface(
+                        onClick = onChapterClick,
+                        shape = RoundedCornerShape(8.dp),
+                        color = MaterialTheme.colorScheme.surface,
+                        border = androidx.compose.foundation.BorderStroke(
+                            0.5.dp,
+                            MaterialTheme.colorScheme.onBackground.copy(alpha = 0.08f)
+                        ),
+                        shadowElevation = 1.dp
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "Ch. ${uiState.currentChapter}",
+                                style = MaterialTheme.typography.bodyMedium.copy(
+                                    fontWeight = FontWeight.Medium
+                                ),
+                                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.55f)
+                            )
+                            Spacer(Modifier.width(4.dp))
+                            Text(
+                                text = "\u25BE",
+                                fontSize = 11.sp,
+                                color = GoldAccent.copy(alpha = 0.8f)
+                            )
+                        }
+                    }
+                }
+
+                Spacer(Modifier.height(8.dp))
             }
+
+            // Gradient fade — background color to transparent
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(20.dp)
+                    .background(
+                        Brush.verticalGradient(
+                            colors = listOf(bgColor, bgColor.copy(alpha = 0f))
+                        )
+                    )
+            )
         }
     }
 }
