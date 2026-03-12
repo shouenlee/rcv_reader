@@ -1,0 +1,23 @@
+# Gradle
+.gradle/
+build/
+app/build/
+
+# IDE
+.idea/
+*.iml
+local.properties
+
+# Kotlin
+.kotlin/
+
+# OS
+.DS_Store
+
+# Superpowers
+.superpowers/
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
