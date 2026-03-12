@@ -1,6 +1,5 @@
 package com.rcvreader.ui.reading
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
@@ -30,6 +29,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
@@ -177,29 +178,25 @@ fun ReadingScreen(
     }
 }
 
-// A chip whose background fades from transparent → color → color → transparent horizontally.
-// For edge-pinned chips (prev/next), pass edgeFade = Left or Right to only fade on one side.
-private enum class EdgeFade { None, Left, Right }
-
 @Composable
 private fun GradientChip(
     onClick: () -> Unit,
-    edgeFade: EdgeFade = EdgeFade.None,
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit
 ) {
     val bg = MaterialTheme.colorScheme.surface
-    val brush = when (edgeFade) {
-        EdgeFade.Left  -> Brush.horizontalGradient(listOf(Color.Transparent, bg))
-        EdgeFade.Right -> Brush.horizontalGradient(listOf(bg, Color.Transparent))
-        EdgeFade.None  -> Brush.horizontalGradient(
-            colorStops = arrayOf(0f to Color.Transparent, 0.25f to bg, 0.75f to bg, 1f to Color.Transparent)
-        )
-    }
     Box(
         modifier = modifier
             .clip(RoundedCornerShape(10.dp))
-            .background(brush)
+            .drawBehind {
+                drawRect(
+                    brush = Brush.radialGradient(
+                        colors = listOf(bg, Color.Transparent),
+                        center = Offset(size.width / 2f, size.height / 2f),
+                        radius = maxOf(size.width, size.height) * 0.85f
+                    )
+                )
+            }
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
@@ -229,8 +226,7 @@ private fun FloatingNav(
         ) {
             uiState.previousChapter?.let { (book, chapter) ->
                 GradientChip(
-                    onClick = { onPrevChapter(book, chapter) },
-                    edgeFade = EdgeFade.Left
+                    onClick = { onPrevChapter(book, chapter) }
                 ) {
                     Text(
                         text = "\u2190 ${book.name} $chapter",
@@ -243,8 +239,7 @@ private fun FloatingNav(
 
             uiState.nextChapter?.let { (book, chapter) ->
                 GradientChip(
-                    onClick = { onNextChapter(book, chapter) },
-                    edgeFade = EdgeFade.Right
+                    onClick = { onNextChapter(book, chapter) }
                 ) {
                     Text(
                         text = "${book.name} $chapter \u2192",
