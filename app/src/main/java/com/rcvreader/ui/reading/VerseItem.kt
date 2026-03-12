@@ -76,7 +76,7 @@ fun VerseItem(
             append(verse.text)
             if (verse.hasFootnotes) {
                 append("  ")
-                withStyle(SpanStyle(color = VerseDotColor, fontSize = 9.sp)) {
+                withStyle(SpanStyle(color = VerseDotColor, fontSize = 12.sp)) {
                     append("\u2022")
                 }
             }
@@ -85,8 +85,8 @@ fun VerseItem(
         Text(
             text = verseText,
             style = MaterialTheme.typography.bodyLarge.copy(
-                fontSize = 18.sp,
-                lineHeight = 32.sp
+                fontSize = 17.sp,
+                lineHeight = 30.sp
             ),
             color = MaterialTheme.colorScheme.onBackground
         )
