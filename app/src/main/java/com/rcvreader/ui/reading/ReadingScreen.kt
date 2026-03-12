@@ -1,5 +1,6 @@
 package com.rcvreader.ui.reading
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
@@ -9,17 +10,23 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -27,24 +34,25 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.lerp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.rcvreader.data.model.Book
 import com.rcvreader.ui.navigation.NavigationBottomSheet
 import com.rcvreader.ui.settings.SettingsPanel
 import com.rcvreader.ui.settings.SettingsViewModel
 import com.rcvreader.ui.theme.GoldAccent
+
+// Fixed heights — drives both the nav layout and LazyColumn contentPadding
+private val NAV_EXPANDED_HEIGHT = 88.dp
+private val NAV_COMPACT_HEIGHT = 48.dp
 
 @Composable
 fun ReadingScreen(
@@ -55,13 +63,22 @@ fun ReadingScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val settings by settingsViewModel.settings.collectAsStateWithLifecycle()
     val listState = rememberLazyListState()
-    val density = LocalDensity.current
 
     var sheetOpen by remember { mutableStateOf(false) }
     var sheetInitialTab by remember { mutableIntStateOf(0) }
     var settingsPanelOpen by remember { mutableStateOf(false) }
-    var navHeightPx by remember { mutableIntStateOf(0) }
-    val navHeightDp = with(density) { navHeightPx.toDp() }
+
+    // 0f = fully expanded (at top), 1f = fully compact (scrolled)
+    // Only returns to 0f when user scrolls all the way back to the very top
+    val compactProgress by remember {
+        derivedStateOf {
+            if (listState.firstVisibleItemIndex > 0) {
+                1f
+            } else {
+                (listState.firstVisibleItemScrollOffset / 120f).coerceIn(0f, 1f)
+            }
+        }
+    }
 
     val currentBook = uiState.currentBook
     val currentChapter = uiState.currentChapter
@@ -93,11 +110,11 @@ fun ReadingScreen(
                     .fillMaxSize()
                     .padding(padding)
             ) {
-                // Verse list — scrolls under the floating nav
+                // Verse list — fixed top padding matches expanded nav height
                 LazyColumn(
                     state = listState,
                     modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(top = navHeightDp)
+                    contentPadding = PaddingValues(top = NAV_EXPANDED_HEIGHT)
                 ) {
                     items(
                         items = uiState.verses,
@@ -135,16 +152,15 @@ fun ReadingScreen(
                     }
                 }
 
-                // Floating nav overlay — transparent background, opaque buttons only
-                FloatingNav(
+                // Animated collapsing top nav
+                AnimatedTopNav(
                     uiState = uiState,
+                    compactProgress = compactProgress,
                     onPrevChapter = { book, chapter -> viewModel.navigateTo(book.id, chapter) },
                     onNextChapter = { book, chapter -> viewModel.navigateTo(book.id, chapter) },
                     onBookClick = { sheetInitialTab = 0; sheetOpen = true },
                     onChapterClick = { sheetInitialTab = 1; sheetOpen = true },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .onSizeChanged { navHeightPx = it.height }
+                    modifier = Modifier.fillMaxWidth()
                 )
             }
         }
@@ -178,126 +194,119 @@ fun ReadingScreen(
 }
 
 @Composable
-private fun GradientChip(
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    content: @Composable () -> Unit
-) {
-    val bg = MaterialTheme.colorScheme.surface
-    Box(
-        modifier = modifier
-            .drawBehind {
-                // Draw an oval larger than the chip bounds so the gradient
-                // fades to transparent in all directions with no hard edge.
-                val rx = size.width * 0.25f
-                val ry = size.height * 0.6f
-                drawOval(
-                    brush = Brush.radialGradient(
-                        colors = listOf(bg, Color.Transparent),
-                        center = Offset(size.width / 2f, size.height / 2f),
-                        radius = maxOf(size.width + rx * 2f, size.height + ry * 2f) / 2f
-                    ),
-                    topLeft = Offset(-rx, -ry),
-                    size = Size(size.width + rx * 2f, size.height + ry * 2f)
-                )
-            }
-            .clickable(onClick = onClick),
-        contentAlignment = Alignment.Center
-    ) {
-        content()
-    }
-}
-
-@Composable
-private fun FloatingNav(
+private fun AnimatedTopNav(
     uiState: ReadingUiState,
-    onPrevChapter: (com.rcvreader.data.model.Book, Int) -> Unit,
-    onNextChapter: (com.rcvreader.data.model.Book, Int) -> Unit,
+    compactProgress: Float,
+    onPrevChapter: (Book, Int) -> Unit,
+    onNextChapter: (Book, Int) -> Unit,
     onBookClick: () -> Unit,
     onChapterClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    androidx.compose.foundation.layout.Column(
-        modifier = modifier.fillMaxWidth()
+    val bgColor = MaterialTheme.colorScheme.background
+    val shrink = NAV_EXPANDED_HEIGHT - NAV_COMPACT_HEIGHT
+    val navHeight = lerp(NAV_EXPANDED_HEIGHT, NAV_COMPACT_HEIGHT, compactProgress)
+
+    // Row 2 slides from y=shrink (expanded) to y=0 (compact).
+    // Math: row2Bottom = lerp(shrink, 0, p) + NAV_COMPACT_HEIGHT = lerp(expanded, compact, p) = navHeight
+    // So row 2's bottom always exactly touches the nav bottom — nothing clips.
+    val row2OffsetY: Dp = lerp(shrink, 0.dp, compactProgress)
+
+    Box(
+        modifier = modifier
+            .height(navHeight)
+            .background(bgColor)
+            .clipToBounds()
     ) {
-        // Prev / Next row — fully transparent background
+        // Row 1: Prev / Next — stays at top, always visible
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 4.dp),
+                .height(NAV_COMPACT_HEIGHT)
+                .padding(horizontal = 8.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             uiState.previousChapter?.let { (book, chapter) ->
-                GradientChip(
-                    onClick = { onPrevChapter(book, chapter) }
-                ) {
+                TextButton(onClick = { onPrevChapter(book, chapter) }) {
                     Text(
                         text = "\u2190 ${book.name} $chapter",
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.secondary,
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                        color = MaterialTheme.colorScheme.secondary
                     )
                 }
             } ?: Spacer(Modifier.width(1.dp))
 
             uiState.nextChapter?.let { (book, chapter) ->
-                GradientChip(
-                    onClick = { onNextChapter(book, chapter) }
-                ) {
+                TextButton(onClick = { onNextChapter(book, chapter) }) {
                     Text(
                         text = "${book.name} $chapter \u2192",
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.secondary,
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                        color = MaterialTheme.colorScheme.secondary
                     )
                 }
             } ?: Spacer(Modifier.width(1.dp))
         }
 
-        // Book / Chapter row — fully transparent background
+        // Row 2: Book + Chapter — slides up into Row 1 as compactProgress increases
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 6.dp),
+                .height(NAV_COMPACT_HEIGHT)
+                .offset(y = row2OffsetY),
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            GradientChip(onClick = onBookClick) {
+            // Book name — font shrinks from 22sp to 15sp
+            val bookFontSize = (22f - 7f * compactProgress).sp
+            Surface(
+                onClick = onBookClick,
+                color = bgColor,
+                shape = RoundedCornerShape(6.dp)
+            ) {
                 Text(
                     text = uiState.currentBook?.name ?: "",
-                    style = MaterialTheme.typography.titleLarge.copy(
-                        fontFamily = FontFamily.Serif,
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = 22.sp
-                    ),
+                    fontSize = bookFontSize,
+                    fontFamily = FontFamily.Serif,
+                    fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
                 )
             }
 
             Spacer(Modifier.width(8.dp))
 
-            GradientChip(onClick = onChapterClick) {
+            // Chapter pill — font shrinks from 14sp to 11sp
+            val chapterFontSize = (14f - 3f * compactProgress).sp
+            Surface(
+                onClick = onChapterClick,
+                color = MaterialTheme.colorScheme.surface,
+                shape = RoundedCornerShape(6.dp)
+            ) {
                 Row(
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
                         text = "Ch. ${uiState.currentChapter}",
-                        style = MaterialTheme.typography.bodyMedium.copy(
-                            fontWeight = FontWeight.Medium
-                        ),
+                        fontSize = chapterFontSize,
+                        fontWeight = FontWeight.Medium,
                         color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.55f)
                     )
-                    Spacer(Modifier.width(4.dp))
+                    Spacer(Modifier.width(3.dp))
                     Text(
                         text = "\u25BE",
-                        fontSize = 11.sp,
+                        fontSize = 10.sp,
                         color = GoldAccent.copy(alpha = 0.8f)
                     )
                 }
             }
         }
+
+        // Bottom divider
+        HorizontalDivider(
+            modifier = Modifier.align(Alignment.BottomCenter),
+            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.08f)
+        )
     }
 }
