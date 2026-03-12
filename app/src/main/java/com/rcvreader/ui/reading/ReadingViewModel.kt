@@ -13,6 +13,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -21,10 +22,11 @@ data class ReadingUiState(
     val currentBook: Book? = null,
     val currentChapter: Int = 1,
     val verses: List<Verse> = emptyList(),
-    val expandedVerseNumber: Int? = null,
+    val expandedVerseId: Int? = null,
     val expandedFootnotes: List<Footnote> = emptyList(),
     val previousChapter: Pair<Book, Int>? = null,
     val nextChapter: Pair<Book, Int>? = null,
+    val pendingBook: Book? = null,
 )
 
 class ReadingViewModel(application: Application) : AndroidViewModel(application) {
@@ -41,21 +43,25 @@ class ReadingViewModel(application: Application) : AndroidViewModel(application)
 
     init {
         viewModelScope.launch {
-            repository.getAllBooks().collect { books ->
-                allBooks = books
-                _uiState.update { it.copy(books = books) }
+            val books = repository.getAllBooks().first()
+            allBooks = books
+            _uiState.update { it.copy(books = books) }
 
-                val savedBookId = prefs.getInt("last_book_id", 1)
-                val savedChapter = prefs.getInt("last_chapter", 1)
-                val book = books.find { it.id == savedBookId } ?: books.firstOrNull()
-                if (book != null) {
-                    navigateTo(book.id, savedChapter)
-                }
+            val savedBookId = prefs.getInt("last_book_id", 1)
+            val savedChapter = prefs.getInt("last_chapter", 1)
+            val book = books.find { it.id == savedBookId } ?: books.firstOrNull()
+            if (book != null) {
+                navigateTo(book.id, savedChapter)
             }
         }
     }
 
+    fun selectBook(book: Book) {
+        _uiState.update { it.copy(pendingBook = book) }
+    }
+
     fun navigateTo(bookId: Int, chapter: Int) {
+        _uiState.update { it.copy(pendingBook = null) }
         versesJob?.cancel()
         versesJob = viewModelScope.launch {
             val book = repository.getBookById(bookId) ?: return@launch
@@ -72,7 +78,7 @@ class ReadingViewModel(application: Application) : AndroidViewModel(application)
                 it.copy(
                     currentBook = book,
                     currentChapter = chapter,
-                    expandedVerseNumber = null,
+                    expandedVerseId = null,
                     expandedFootnotes = emptyList(),
                     previousChapter = prev,
                     nextChapter = next
@@ -86,21 +92,21 @@ class ReadingViewModel(application: Application) : AndroidViewModel(application)
     }
 
     fun toggleVerse(verse: Verse) {
-        if (verse.has_footnotes == 0) return
+        if (!verse.hasFootnotes) return
 
         viewModelScope.launch {
-            val currentExpanded = _uiState.value.expandedVerseNumber
-            if (currentExpanded == verse.verse_number) {
+            val currentExpanded = _uiState.value.expandedVerseId
+            if (currentExpanded == verse.id) {
                 _uiState.update {
-                    it.copy(expandedVerseNumber = null, expandedFootnotes = emptyList())
+                    it.copy(expandedVerseId = null, expandedFootnotes = emptyList())
                 }
             } else {
                 val footnotes = repository.getFootnotesForVerse(
-                    verse.book_id, verse.chapter, verse.verse_number
+                    verse.bookId, verse.chapter, verse.verseNumber
                 )
                 _uiState.update {
                     it.copy(
-                        expandedVerseNumber = verse.verse_number,
+                        expandedVerseId = verse.id,
                         expandedFootnotes = footnotes
                     )
                 }
@@ -114,13 +120,13 @@ class ReadingViewModel(application: Application) : AndroidViewModel(application)
         direction: Int
     ): Pair<Book, Int>? {
         val targetChapter = currentChapter + direction
-        if (targetChapter in 1..currentBook.chapter_count) {
+        if (targetChapter in 1..currentBook.chapterCount) {
             return currentBook to targetChapter
         }
         val targetBookIndex = allBooks.indexOfFirst { it.id == currentBook.id } + direction
         if (targetBookIndex !in allBooks.indices) return null
         val targetBook = allBooks[targetBookIndex]
-        val chapter = if (direction > 0) 1 else targetBook.chapter_count
+        val chapter = if (direction > 0) 1 else targetBook.chapterCount
         return targetBook to chapter
     }
 }

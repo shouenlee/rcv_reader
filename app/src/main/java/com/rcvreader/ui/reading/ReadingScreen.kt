@@ -89,7 +89,7 @@ fun ReadingScreen(
                     onBookSelected = { book ->
                         bookPickerExpanded = false
                         chapterPickerExpanded = true
-                        viewModel.navigateTo(book.id, 1)
+                        viewModel.selectBook(book)
                     }
                 )
 
@@ -97,7 +97,7 @@ fun ReadingScreen(
 
                 ChapterPickerDropdown(
                     currentChapter = uiState.currentChapter,
-                    chapterCount = uiState.currentBook?.chapter_count ?: 1,
+                    chapterCount = uiState.currentBook?.chapterCount ?: 1,
                     expanded = chapterPickerExpanded,
                     onToggle = {
                         chapterPickerExpanded = !chapterPickerExpanded
@@ -105,7 +105,8 @@ fun ReadingScreen(
                     },
                     onChapterSelected = { chapter ->
                         chapterPickerExpanded = false
-                        uiState.currentBook?.let { book ->
+                        val targetBook = uiState.pendingBook ?: uiState.currentBook
+                        targetBook?.let { book ->
                             viewModel.navigateTo(book.id, chapter)
                         }
                     }
@@ -125,8 +126,8 @@ fun ReadingScreen(
                 ) { verse ->
                     VerseItem(
                         verse = verse,
-                        isExpanded = uiState.expandedVerseNumber == verse.verse_number,
-                        footnotes = if (uiState.expandedVerseNumber == verse.verse_number) {
+                        isExpanded = uiState.expandedVerseId == verse.id,
+                        footnotes = if (uiState.expandedVerseId == verse.id) {
                             uiState.expandedFootnotes
                         } else {
                             emptyList()

@@ -1,5 +1,6 @@
 package com.rcvreader.data.model
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
@@ -9,5 +10,5 @@ data class Book(
     val abbreviation: String,
     val name: String,
     val testament: String,
-    val chapter_count: Int
+    @ColumnInfo(name = "chapter_count") val chapterCount: Int
 )

@@ -1,14 +1,25 @@
 package com.rcvreader.data.model
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
+import androidx.room.ForeignKey
+import androidx.room.Index
 import androidx.room.PrimaryKey
 
-@Entity(tableName = "verses")
+@Entity(
+    tableName = "verses",
+    foreignKeys = [ForeignKey(
+        entity = Book::class,
+        parentColumns = ["id"],
+        childColumns = ["book_id"]
+    )],
+    indices = [Index("book_id", "chapter")]
+)
 data class Verse(
     @PrimaryKey val id: Int,
-    val book_id: Int,
+    @ColumnInfo(name = "book_id") val bookId: Int,
     val chapter: Int,
-    val verse_number: Int,
+    @ColumnInfo(name = "verse_number") val verseNumber: Int,
     val text: String,
-    val has_footnotes: Int
+    @ColumnInfo(name = "has_footnotes") val hasFootnotes: Boolean
 )

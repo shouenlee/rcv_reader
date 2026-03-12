@@ -33,7 +33,7 @@ fun VerseItem(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val isClickable = verse.has_footnotes == 1
+    val isClickable = verse.hasFootnotes
     val bgColor = if (isExpanded) FootnoteHighlight else MaterialTheme.colorScheme.background
     val borderColor = GoldAccent
 
@@ -66,10 +66,10 @@ fun VerseItem(
                     fontSize = 10.sp
                 )
             ) {
-                append("${verse.verse_number} ")
+                append("${verse.verseNumber} ")
             }
             append(verse.text)
-            if (verse.has_footnotes == 1) {
+            if (verse.hasFootnotes) {
                 append(" ")
                 withStyle(SpanStyle(color = VerseDotColor, fontSize = 8.sp)) {
                     append("\u25CF")
