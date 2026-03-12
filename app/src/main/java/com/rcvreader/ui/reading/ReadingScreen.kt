@@ -152,7 +152,7 @@ fun ReadingScreen(
                                     .padding(16.dp),
                             ) {
                                 Text(
-                                    "Next: ${book.name} $chapter \u2192",
+                                    "Next: ${book.abbreviation} $chapter \u2192",
                                     style = MaterialTheme.typography.bodyMedium.copy(
                                         fontWeight = FontWeight.Bold
                                     ),
@@ -236,7 +236,7 @@ private fun AnimatedTopNav(
             uiState.previousChapter?.let { (book, chapter) ->
                 TextButton(onClick = { onPrevChapter(book, chapter) }) {
                     Text(
-                        text = "\u2190 ${book.name} $chapter",
+                        text = "\u2190 ${book.abbreviation} $chapter",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.secondary
                     )
@@ -246,7 +246,7 @@ private fun AnimatedTopNav(
             uiState.nextChapter?.let { (book, chapter) ->
                 TextButton(onClick = { onNextChapter(book, chapter) }) {
                     Text(
-                        text = "${book.name} $chapter \u2192",
+                        text = "${book.abbreviation} $chapter \u2192",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.secondary
                     )
