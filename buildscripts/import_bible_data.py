@@ -136,14 +136,14 @@ def parse_footnote_content(text):
 CREATE_TABLES_SQL = """
 CREATE TABLE IF NOT EXISTS books (
     id INTEGER PRIMARY KEY,
-    name TEXT NOT NULL,
     abbreviation TEXT NOT NULL,
+    name TEXT NOT NULL,
     testament TEXT NOT NULL,
     chapter_count INTEGER NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS verses (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id INTEGER PRIMARY KEY,
     book_id INTEGER NOT NULL,
     chapter INTEGER NOT NULL,
     verse_number INTEGER NOT NULL,
@@ -153,7 +153,7 @@ CREATE TABLE IF NOT EXISTS verses (
 );
 
 CREATE TABLE IF NOT EXISTS footnotes (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id INTEGER PRIMARY KEY,
     book_id INTEGER NOT NULL,
     chapter INTEGER NOT NULL,
     verse_number INTEGER NOT NULL,
@@ -163,12 +163,11 @@ CREATE TABLE IF NOT EXISTS footnotes (
     FOREIGN KEY (book_id) REFERENCES books(id)
 );
 
-CREATE INDEX IF NOT EXISTS idx_verses_book_chapter ON verses(book_id, chapter);
-CREATE INDEX IF NOT EXISTS idx_verses_lookup ON verses(book_id, chapter, verse_number);
-CREATE INDEX IF NOT EXISTS idx_footnotes_verse ON footnotes(book_id, chapter, verse_number);
+CREATE INDEX IF NOT EXISTS idx_verses_lookup ON verses(book_id, chapter);
+CREATE INDEX IF NOT EXISTS idx_footnotes_lookup ON footnotes(book_id, chapter, verse_number);
 
 CREATE VIRTUAL TABLE IF NOT EXISTS verses_fts USING fts5(text, content='verses', content_rowid='id');
-CREATE VIRTUAL TABLE IF NOT EXISTS footnotes_fts USING fts5(content, content='footnotes', content_rowid='id');
+CREATE VIRTUAL TABLE IF NOT EXISTS footnotes_fts USING fts5(keyword, content, content='footnotes', content_rowid='id');
 """
 
 
