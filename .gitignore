@@ -1,0 +1,24 @@
+# Gradle
+.gradle/
+build/
+app/build/
+
+# IDE
+.idea/
+*.iml
+local.properties
+
+# Kotlin
+.kotlin/
+
+# OS
+.DS_Store
+
+# Raw Bible data (source files for bible.db generation)
+Verses/
+Footnotes/
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
