@@ -73,10 +73,12 @@ class BibleRepository(
         val vTier3 = searchDao.queryVerses(buildVerseQuery(orExpr, verseScopeClause))
             .filter { it.id !in seenVerseIds }.map { it.copy(tier = 3) }
 
-        val verseResults = vTier1 + vTier2 + vTier3
-
         // ── Footnote results ─────────────────────────────────────────────────
-        val footnoteResults = if (includeFootnotes) {
+        val fTier1: List<SearchResult>
+        val fTier2: List<SearchResult>
+        val fTier3: List<SearchResult>
+
+        if (includeFootnotes) {
             val fnScopeClause = when (scope) {
                 SearchScope.ALL -> ""
                 SearchScope.OT -> "AND b.testament = 'OT'"
@@ -85,21 +87,24 @@ class BibleRepository(
                     if (currentBookId != null) "AND f.book_id = $currentBookId" else ""
             }
 
-            val fTier1 = searchDao.queryFootnotes(buildFootnoteQuery(phraseExpr, fnScopeClause))
+            fTier1 = searchDao.queryFootnotes(buildFootnoteQuery(phraseExpr, fnScopeClause))
                 .map { it.copy(tier = 1) }
             val seenFnIds = fTier1.map { it.id }.toHashSet()
 
-            val fTier2 = searchDao.queryFootnotes(buildFootnoteQuery(andExpr, fnScopeClause))
+            fTier2 = searchDao.queryFootnotes(buildFootnoteQuery(andExpr, fnScopeClause))
                 .filter { it.id !in seenFnIds }.map { it.copy(tier = 2) }
             seenFnIds += fTier2.map { it.id }
 
-            val fTier3 = searchDao.queryFootnotes(buildFootnoteQuery(orExpr, fnScopeClause))
+            fTier3 = searchDao.queryFootnotes(buildFootnoteQuery(orExpr, fnScopeClause))
                 .filter { it.id !in seenFnIds }.map { it.copy(tier = 3) }
+        } else {
+            fTier1 = emptyList()
+            fTier2 = emptyList()
+            fTier3 = emptyList()
+        }
 
-            fTier1 + fTier2 + fTier3
-        } else emptyList()
-
-        return (verseResults + footnoteResults).take(200)
+        // Interleave by tier so footnotes aren't starved by the 200-result cap
+        return (vTier1 + fTier1 + vTier2 + fTier2 + vTier3 + fTier3).take(200)
     }
 
     private fun buildVerseQuery(ftsExpr: String, scopeClause: String) = SimpleSQLiteQuery(

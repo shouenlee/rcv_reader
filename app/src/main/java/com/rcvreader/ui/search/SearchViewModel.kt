@@ -1,6 +1,7 @@
 package com.rcvreader.ui.search
 
 import android.app.Application
+import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.rcvreader.data.db.BibleDatabase
@@ -73,7 +74,8 @@ class SearchViewModel(application: Application) : AndroidViewModel(application) 
                             params.includeFootnotes,
                             params.currentBookId
                         )
-                    } catch (_: Exception) {
+                    } catch (e: Exception) {
+                        Log.e("SearchViewModel", "Search failed", e)
                         _results.value = emptyList()
                     } finally {
                         _isSearching.value = false
