@@ -153,6 +153,10 @@ CREATE INDEX IF NOT EXISTS `idx_verses_lookup` ON `verses` (`book_id`, `chapter`
 CREATE TABLE IF NOT EXISTS `footnotes` (`id` INTEGER NOT NULL, `book_id` INTEGER NOT NULL, `chapter` INTEGER NOT NULL, `verse_number` INTEGER NOT NULL, `footnote_number` INTEGER NOT NULL, `keyword` TEXT, `content` TEXT NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`book_id`) REFERENCES `books`(`id`) ON UPDATE NO ACTION ON DELETE NO ACTION );
 
 CREATE INDEX IF NOT EXISTS `idx_footnotes_lookup` ON `footnotes` (`book_id`, `chapter`, `verse_number`);
+
+CREATE VIRTUAL TABLE IF NOT EXISTS `verses_fts` USING fts5(`text`, content=`verses`, content_rowid=`id`);
+
+CREATE VIRTUAL TABLE IF NOT EXISTS `footnotes_fts` USING fts5(`content`, content=`footnotes`, content_rowid=`id`);
 """
 
 
@@ -266,6 +270,10 @@ def build_database(verses_dir, footnotes_dir, db_path):
             "UPDATE verses SET has_footnotes = 1 WHERE book_id = ? AND chapter = ? AND verse_number = ?",
             (book_id, chapter, verse_num),
         )
+
+    # Rebuild FTS indexes
+    cursor.execute("INSERT INTO verses_fts(verses_fts) VALUES('rebuild')")
+    cursor.execute("INSERT INTO footnotes_fts(footnotes_fts) VALUES('rebuild')")
 
     conn.commit()
     conn.close()
