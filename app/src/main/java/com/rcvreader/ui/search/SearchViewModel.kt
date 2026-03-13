@@ -73,6 +73,8 @@ class SearchViewModel(application: Application) : AndroidViewModel(application) 
                             params.includeFootnotes,
                             params.currentBookId
                         )
+                    } catch (_: Exception) {
+                        _results.value = emptyList()
                     } finally {
                         _isSearching.value = false
                     }

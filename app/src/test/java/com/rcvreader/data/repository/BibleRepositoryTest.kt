@@ -39,4 +39,9 @@ class BibleRepositoryTest {
     fun `sanitizeQuery lowercases nothing - preserves case`() {
         assertEquals(listOf("Grace"), sanitizeQuery("Grace"))
     }
+
+    @Test
+    fun `sanitizeQuery strips colon plus caret and braces`() {
+        assertEquals(listOf("textgrace", "test"), sanitizeQuery("text:grace ^{test}"))
+    }
 }

@@ -17,7 +17,7 @@ import kotlinx.coroutines.flow.Flow
  * Package-internal so unit tests can call it directly.
  */
 internal fun sanitizeQuery(raw: String): List<String> {
-    val specialChars = Regex("""["*()\-]""")
+    val specialChars = Regex("""["*()\-:+^{}]""")
     return raw.trim()
         .split(Regex("\\s+"))
         .map { it.replace(specialChars, "").trim() }
