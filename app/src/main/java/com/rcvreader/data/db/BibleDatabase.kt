@@ -7,6 +7,7 @@ import androidx.room.RoomDatabase
 import com.rcvreader.data.model.Book
 import com.rcvreader.data.model.Footnote
 import com.rcvreader.data.model.Verse
+import io.requery.android.database.sqlite.RequerySQLiteOpenHelperFactory
 
 @Database(
     entities = [Book::class, Verse::class, Footnote::class],
@@ -30,6 +31,7 @@ abstract class BibleDatabase : RoomDatabase() {
                     BibleDatabase::class.java,
                     "bible.db"
                 )
+                    .openHelperFactory(RequerySQLiteOpenHelperFactory())
                     .createFromAsset("bible.db")
                     .fallbackToDestructiveMigration()
                     .build()
