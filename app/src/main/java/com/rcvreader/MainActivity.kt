@@ -19,6 +19,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -57,7 +58,14 @@ class MainActivity : ComponentActivity() {
             RCVReaderTheme(darkTheme = darkTheme) {
                 val screenWidth = LocalConfiguration.current.screenWidthDp.dp
 
+                val keyboardController = LocalSoftwareKeyboardController.current
                 var searchVisible by remember { mutableStateOf(false) }
+
+                // Hide keyboard whenever search pane closes
+                LaunchedEffect(searchVisible) {
+                    if (!searchVisible) keyboardController?.hide()
+                }
+
                 val offsetX by animateDpAsState(
                     targetValue = if (searchVisible) -screenWidth else 0.dp,
                     animationSpec = tween(durationMillis = 280),

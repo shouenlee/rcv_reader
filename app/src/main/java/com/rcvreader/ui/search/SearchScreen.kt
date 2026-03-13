@@ -26,7 +26,6 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -35,10 +34,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -56,6 +58,7 @@ fun SearchScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val focusRequester = remember { FocusRequester() }
+    val keyboardController = LocalSoftwareKeyboardController.current
 
     LaunchedEffect(searchVisible) {
         if (searchVisible) {
@@ -117,19 +120,32 @@ fun SearchScreen(
                     )
                 }
             }
-            TextButton(onClick = onCancel, modifier = Modifier.padding(start = 4.dp)) {
-                Text(
-                    "Cancel",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.primary
-                )
+            if (uiState.query.isNotEmpty()) {
+                TextButton(onClick = { viewModel.setQuery("") }, modifier = Modifier.padding(start = 4.dp)) {
+                    Text(
+                        "Clear",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+            } else {
+                TextButton(onClick = { keyboardController?.hide(); onCancel() }, modifier = Modifier.padding(start = 4.dp)) {
+                    Text(
+                        "Cancel",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
             }
         }
 
-        // Scope chips
+        // Scope chips + footnotes chip — unified filter row
         Row(
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
-            horizontalArrangement = Arrangement.spacedBy(6.dp)
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 6.dp),
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
             val scopes = listOf(
                 SearchScope.ALL to "All",
@@ -159,26 +175,30 @@ fun SearchScreen(
                     )
                 }
             }
-        }
 
-        // Footnotes toggle
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 18.dp, vertical = 6.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text(
-                "Include footnotes",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
-            )
-            Switch(
-                checked = uiState.includeFootnotes,
-                onCheckedChange = { viewModel.setIncludeFootnotes(it) },
-                modifier = Modifier.height(24.dp)
-            )
+            Spacer(Modifier.weight(1f))
+
+            // Footnotes toggle — abbreviate on narrow screens
+            val screenWidth = LocalConfiguration.current.screenWidthDp
+            val footnoteLabel = if (screenWidth < 360) "Fn" else "Footnotes"
+
+            Surface(
+                onClick = { viewModel.setIncludeFootnotes(!uiState.includeFootnotes) },
+                shape = RoundedCornerShape(20.dp),
+                color = if (uiState.includeFootnotes) GoldAccent.copy(alpha = 0.15f)
+                        else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.06f),
+                border = if (uiState.includeFootnotes)
+                    androidx.compose.foundation.BorderStroke(1.5.dp, GoldAccent)
+                else null
+            ) {
+                Text(
+                    text = footnoteLabel,
+                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = if (uiState.includeFootnotes) MaterialTheme.colorScheme.primary
+                            else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
+                )
+            }
         }
 
         // Status row
