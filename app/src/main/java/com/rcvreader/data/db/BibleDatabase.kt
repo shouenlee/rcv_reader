@@ -17,6 +17,7 @@ abstract class BibleDatabase : RoomDatabase() {
     abstract fun bookDao(): BookDao
     abstract fun verseDao(): VerseDao
     abstract fun footnoteDao(): FootnoteDao
+    abstract fun searchDao(): SearchDao
 
     companion object {
         @Volatile
