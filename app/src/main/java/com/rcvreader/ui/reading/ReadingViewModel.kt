@@ -31,7 +31,9 @@ data class ReadingUiState(
 
 class ReadingViewModel(application: Application) : AndroidViewModel(application) {
     private val db = BibleDatabase.getInstance(application)
-    private val repository = BibleRepository(db.bookDao(), db.verseDao(), db.footnoteDao())
+    private val repository = BibleRepository(
+        db.bookDao(), db.verseDao(), db.footnoteDao(), db.searchDao()
+    )
 
     private val prefs = application.getSharedPreferences("rcv_reader", Context.MODE_PRIVATE)
 
