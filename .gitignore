@@ -25,3 +25,7 @@ __pycache__/
 
 # Worktrees
 .worktrees/
+
+# Worktree symlinks
+Footnotes
+Verses
