@@ -1,12 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  3D closed book: crimson rounded front cover, gold spine face, cream top/pages face.
-  Viewport 108dp. Safe zone center 72dp (18dp inset each side).
-  Book fills ~80% of safe zone. Depth offset: (-11, -7).
+  3D closed book — all geometry scaled to fit within the 66dp safe-zone circle
+  (radius 33dp from centre 54,54). Farthest point is back-TL at (31,31) = 32.5dp.
 
-  Front face corners:  TL(30,26) TR(86,26) BR(86,90) BL(30,90)
-  Back face corners:   TL(19,19) TR(75,19) BR(75,83) BL(19,83)
-  Faces drawn back→front: top, spine, cover.
+  108dp viewport. Faces drawn back→front: top/pages, spine, front cover.
+  Front face: TL(38,35) TR(75,35) BR(75,78) BL(38,78)  37dp wide × 43dp tall
+  Back face:  TL(31,31) TR(68,31) BR(68,73) BL(31,73)  depth offset (-7,-4)
 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:aapt="http://schemas.android.com/aapt"
@@ -15,11 +14,11 @@
     android:viewportWidth="108"
     android:viewportHeight="108">
 
-    <!-- Ambient warm glow behind book -->
-    <path android:pathData="M54,65 m-42,0 a42,28 0 1,0 84,0 a42,28 0 1,0 -84,0">
+    <!-- Ambient warm glow -->
+    <path android:pathData="M54,60 m-35,0 a35,22 0 1,0 70,0 a35,22 0 1,0 -70,0">
         <aapt:attr name="android:fillColor">
             <gradient android:type="radial"
-                android:centerX="54" android:centerY="65" android:gradientRadius="42">
+                android:centerX="54" android:centerY="60" android:gradientRadius="35">
                 <item android:offset="0.0" android:color="#38C49B5E"/>
                 <item android:offset="0.6" android:color="#10C49B5E"/>
                 <item android:offset="1.0" android:color="#00C49B5E"/>
@@ -27,34 +26,34 @@
         </aapt:attr>
     </path>
 
-    <!-- ① Top face — pages (cream parallelogram: front→back) -->
-    <!-- Front edge: (30,26)→(86,26)  Back edge: (19,19)→(75,19) -->
-    <path android:pathData="M30,26 L86,26 L75,19 L19,19 Z">
+    <!-- ① Top face — pages (parallelogram: front-edge→back-edge) -->
+    <!-- front: (38,35)→(75,35)   back: (31,31)→(68,31) -->
+    <path android:pathData="M38,35 L75,35 L68,31 L31,31 Z">
         <aapt:attr name="android:fillColor">
             <gradient android:type="linear"
-                android:startX="86" android:startY="26"
-                android:endX="19"   android:endY="19">
+                android:startX="75" android:startY="35"
+                android:endX="31"   android:endY="31">
                 <item android:offset="0.0" android:color="#FFE0D8C8"/>
-                <item android:offset="1.0" android:color="#FFB8B0A0"/>
+                <item android:offset="1.0" android:color="#FFB0A898"/>
             </gradient>
         </aapt:attr>
     </path>
 
-    <!-- Page edge lines on top face -->
+    <!-- Page stack lines on top face -->
     <path
-        android:pathData="M28.4,24.2 L84.4,24.2 M26.8,22.4 L82.8,22.4 M25.2,20.6 L81.2,20.6"
+        android:pathData="M36.6,33.4 L73.6,33.4 M35.2,31.8 L72.2,31.8"
         android:strokeColor="#C0B8A8"
         android:strokeWidth="0.4"
         android:strokeAlpha="0.5"
         android:fillColor="#00000000"/>
 
     <!-- ② Spine face — gold parallelogram -->
-    <!-- Points: front-top(30,26), back-top(19,19), back-bottom(19,83), front-bottom(30,90) -->
-    <path android:pathData="M30,26 L19,19 L19,83 L30,90 Z">
+    <!-- front-top(38,35) back-top(31,31) back-bottom(31,73) front-bottom(38,78) -->
+    <path android:pathData="M38,35 L31,31 L31,73 L38,78 Z">
         <aapt:attr name="android:fillColor">
             <gradient android:type="linear"
-                android:startX="19" android:startY="19"
-                android:endX="30"   android:endY="90">
+                android:startX="31" android:startY="31"
+                android:endX="38"   android:endY="78">
                 <item android:offset="0.0" android:color="#FFF0D080"/>
                 <item android:offset="0.5" android:color="#FFC49B5E"/>
                 <item android:offset="1.0" android:color="#FF7A5020"/>
@@ -62,31 +61,30 @@
         </aapt:attr>
     </path>
 
-    <!-- Spine inner shadow (right edge of spine face, subtle dark strip) -->
-    <path android:pathData="M28,26 L19,19 L19,83 L28,90 Z"
-          android:fillColor="#55180800"/>
+    <!-- Spine inner shadow (depth) -->
+    <path android:pathData="M37,35 L31,31 L31,73 L37,78 Z"
+          android:fillColor="#40180800"/>
 
-    <!-- ③ Front cover — crimson, corners rounded r=5 -->
-    <!-- TL(30,26) TR(86,26) BR(86,90) BL(30,90) -->
-    <path android:pathData="M35,26 L81,26 Q86,26 86,31 L86,85 Q86,90 81,90 L35,90 Q30,90 30,85 L30,31 Q30,26 35,26 Z">
+    <!-- ③ Front cover — crimson, r=4dp rounded corners -->
+    <!-- TL(38,35) TR(75,35) BR(75,78) BL(38,78) -->
+    <path android:pathData="M42,35 L71,35 Q75,35 75,39 L75,74 Q75,78 71,78 L42,78 Q38,78 38,74 L38,39 Q38,35 42,35 Z">
         <aapt:attr name="android:fillColor">
             <gradient android:type="linear"
-                android:startX="38" android:startY="26"
-                android:endX="80"   android:endY="90">
+                android:startX="42" android:startY="35"
+                android:endX="71"   android:endY="78">
                 <item android:offset="0.0" android:color="#FFC03030"/>
                 <item android:offset="0.45" android:color="#FF8C1C1C"/>
-                <item android:offset="1.0" android:color="#FF520E0E"/>
+                <item android:offset="1.0"  android:color="#FF520E0E"/>
             </gradient>
         </aapt:attr>
     </path>
 
-    <!-- Cover sheen — subtle diagonal highlight top-left -->
-    <path android:pathData="M35,26 L81,26 Q86,26 86,31 L86,85 Q86,90 81,90 L35,90 Q30,90 30,85 L30,31 Q30,26 35,26 Z"
-          android:fillAlpha="1">
+    <!-- Cover sheen — subtle diagonal highlight -->
+    <path android:pathData="M42,35 L71,35 Q75,35 75,39 L75,74 Q75,78 71,78 L42,78 Q38,78 38,74 L38,39 Q38,35 42,35 Z">
         <aapt:attr name="android:fillColor">
             <gradient android:type="linear"
-                android:startX="30" android:startY="26"
-                android:endX="70"   android:endY="66">
+                android:startX="38" android:startY="35"
+                android:endX="62"   android:endY="59">
                 <item android:offset="0.0" android:color="#18FFFFFF"/>
                 <item android:offset="0.5" android:color="#06FFFFFF"/>
                 <item android:offset="1.0" android:color="#00FFFFFF"/>
@@ -95,49 +93,49 @@
     </path>
 
     <!-- Cover inset border ornament -->
-    <path android:pathData="M35,31 L81,31 Q84,31 84,34 L84,83 Q84,86 81,86 L35,86 Q32,86 32,83 L32,34 Q32,31 35,31 Z"
+    <path android:pathData="M42,38 L71,38 Q73,38 73,40 L73,75 Q73,77 71,77 L42,77 Q40,77 40,75 L40,40 Q40,38 42,38 Z"
           android:fillColor="#00000000"
           android:strokeColor="#C49B5E"
-          android:strokeWidth="0.6"
+          android:strokeWidth="0.55"
           android:strokeAlpha="0.30"/>
 
     <!-- Corner accent dots -->
-    <path android:pathData="M35,33 m-1.2,0 a1.2,1.2 0 1,0 2.4,0 a1.2,1.2 0 1,0 -2.4,0"
-          android:fillColor="#C49B5E" android:fillAlpha="0.40"/>
-    <path android:pathData="M81,33 m-1.2,0 a1.2,1.2 0 1,0 2.4,0 a1.2,1.2 0 1,0 -2.4,0"
-          android:fillColor="#C49B5E" android:fillAlpha="0.40"/>
-    <path android:pathData="M35,84 m-1.2,0 a1.2,1.2 0 1,0 2.4,0 a1.2,1.2 0 1,0 -2.4,0"
-          android:fillColor="#C49B5E" android:fillAlpha="0.40"/>
-    <path android:pathData="M81,84 m-1.2,0 a1.2,1.2 0 1,0 2.4,0 a1.2,1.2 0 1,0 -2.4,0"
-          android:fillColor="#C49B5E" android:fillAlpha="0.40"/>
+    <path android:pathData="M42,40 m-1.1,0 a1.1,1.1 0 1,0 2.2,0 a1.1,1.1 0 1,0 -2.2,0"
+          android:fillColor="#C49B5E" android:fillAlpha="0.42"/>
+    <path android:pathData="M71,40 m-1.1,0 a1.1,1.1 0 1,0 2.2,0 a1.1,1.1 0 1,0 -2.2,0"
+          android:fillColor="#C49B5E" android:fillAlpha="0.42"/>
+    <path android:pathData="M42,76 m-1.1,0 a1.1,1.1 0 1,0 2.2,0 a1.1,1.1 0 1,0 -2.2,0"
+          android:fillColor="#C49B5E" android:fillAlpha="0.42"/>
+    <path android:pathData="M71,76 m-1.1,0 a1.1,1.1 0 1,0 2.2,0 a1.1,1.1 0 1,0 -2.2,0"
+          android:fillColor="#C49B5E" android:fillAlpha="0.42"/>
 
-    <!-- Thin horizontal accent line near top of cover -->
-    <path android:pathData="M32,38 L84,38"
+    <!-- Thin gold accent near top of cover -->
+    <path android:pathData="M40,44 L73,44"
           android:strokeColor="#C49B5E"
-          android:strokeWidth="0.6"
+          android:strokeWidth="0.55"
           android:strokeAlpha="0.20"
           android:fillColor="#00000000"/>
 
-    <!-- ④ Spine highlight edge — bright gold line where spine meets cover -->
-    <path android:pathData="M30,26 L30,90"
-          android:strokeWidth="1.6"
-          android:strokeAlpha="0.75"
+    <!-- ④ Spine highlight — bright edge where spine meets cover -->
+    <path android:pathData="M38,35 L38,78"
+          android:strokeWidth="1.4"
+          android:strokeAlpha="0.80"
           android:fillColor="#00000000">
         <aapt:attr name="android:strokeColor">
             <gradient android:type="linear"
-                android:startX="30" android:startY="26"
-                android:endX="30"   android:endY="90">
-                <item android:offset="0.0" android:color="#FFF8E8A0"/>
+                android:startX="38" android:startY="35"
+                android:endX="38"   android:endY="78">
+                <item android:offset="0.0" android:color="#FFF8E898"/>
                 <item android:offset="1.0" android:color="#FFC49B5E"/>
             </gradient>
         </aapt:attr>
     </path>
 
     <!-- Top-front edge highlight -->
-    <path android:pathData="M30,26 L86,26"
+    <path android:pathData="M38,35 L75,35"
           android:strokeColor="#F2D488"
-          android:strokeWidth="0.8"
-          android:strokeAlpha="0.30"
+          android:strokeWidth="0.7"
+          android:strokeAlpha="0.28"
           android:fillColor="#00000000"/>
 
 </vector>

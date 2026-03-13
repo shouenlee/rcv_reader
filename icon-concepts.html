@@ -4,213 +4,163 @@
 <meta charset="UTF-8">
 <title>RCV Bible — Icon Preview</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Cormorant+Garamond:ital,wght@0,300;1,300&display=swap');
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    background: #0F0E0C;
-    color: #FAF8F4;
-    font-family: 'Cormorant Garamond', Georgia, serif;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 64px 40px 80px;
-    gap: 52px;
-  }
-  header { text-align: center; }
-  header h1 { font-family:'Cinzel',serif; font-size:11px; letter-spacing:.4em; color:#C49B5E; text-transform:uppercase; margin-bottom:10px; }
-  header p  { font-size:14px; color:rgba(255,255,255,.3); font-style:italic; }
-  .sizes { display:flex; align-items:flex-end; gap:32px; }
-  .sw { display:flex; flex-direction:column; align-items:center; gap:10px; }
-  .sw span { font-family:'Cinzel',serif; font-size:9px; letter-spacing:.2em; color:rgba(255,255,255,.22); }
-  .icon { border-radius:22.4%; overflow:hidden; display:block; }
-  .phone {
-    width:192px; background:#1C1C1E; border-radius:30px;
-    border:1.5px solid rgba(255,255,255,.07); padding:20px 14px 18px;
-    display:flex; flex-direction:column; align-items:center; gap:6px;
-    box-shadow:0 40px 80px rgba(0,0,0,.65);
-  }
-  .home-row { display:flex; gap:18px; align-items:center; justify-content:center; width:100%; padding:6px 0; }
-  .aiw { display:flex; flex-direction:column; align-items:center; gap:5px; }
-  .albl { font-family:-apple-system,sans-serif; font-size:9px; color:rgba(255,255,255,.6); }
-  .ph { width:48px; height:48px; border-radius:11px; background:rgba(255,255,255,.05); }
+  @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400&family=Cormorant+Garamond:ital,wght@0,300;1,300&display=swap');
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:#0F0E0C;color:#FAF8F4;font-family:'Cormorant Garamond',serif;min-height:100vh;
+       display:flex;flex-direction:column;align-items:center;padding:64px 40px 80px;gap:52px}
+  header{text-align:center}
+  header h1{font-family:'Cinzel',serif;font-size:11px;letter-spacing:.4em;color:#C49B5E;text-transform:uppercase;margin-bottom:10px}
+  header p{font-size:14px;color:rgba(255,255,255,.3);font-style:italic}
+  .sizes{display:flex;align-items:flex-end;gap:32px}
+  .sw{display:flex;flex-direction:column;align-items:center;gap:10px}
+  .sw span{font-family:'Cinzel',serif;font-size:9px;letter-spacing:.2em;color:rgba(255,255,255,.22)}
+  .icon{border-radius:22.4%;overflow:hidden;display:block}
+  .note{font-size:12px;color:rgba(255,255,255,.25);font-style:italic;text-align:center;max-width:320px}
+  .phone{width:192px;background:#1C1C1E;border-radius:30px;border:1.5px solid rgba(255,255,255,.07);
+         padding:20px 14px 18px;display:flex;flex-direction:column;align-items:center;gap:6px;
+         box-shadow:0 40px 80px rgba(0,0,0,.65)}
+  .home-row{display:flex;gap:18px;align-items:center;justify-content:center;width:100%;padding:6px 0}
+  .aiw{display:flex;flex-direction:column;align-items:center;gap:5px}
+  .albl{font-family:-apple-system,sans-serif;font-size:9px;color:rgba(255,255,255,.6)}
+  .ph{width:48px;height:48px;border-radius:11px;background:rgba(255,255,255,.05)}
+  /* Circle mask preview */
+  .circle-mask{border-radius:50%!important}
 </style>
 </head>
 <body>
 
 <header>
-  <h1>RCV Bible · The Lantern (3D)</h1>
-  <p>Closed crimson book · gold spine · warm glow</p>
+  <h1>RCV Bible · Icon Preview</h1>
+  <p>Scaled to fit within Android's 66dp safe-zone circle</p>
 </header>
 
+<!-- Reusable SVG defs -->
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <radialGradient id="glow" cx="50%" cy="60%" r="55%">
+      <stop offset="0%"   stop-color="#C49B5E" stop-opacity="0.30"/>
+      <stop offset="60%"  stop-color="#C49B5E" stop-opacity="0.08"/>
+      <stop offset="100%" stop-color="#C49B5E" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="topFace" x1="100%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" stop-color="#E0D8C8"/><stop offset="100%" stop-color="#B0A898"/>
+    </linearGradient>
+    <linearGradient id="spineFace" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F0D080"/><stop offset="50%" stop-color="#C49B5E"/>
+      <stop offset="100%" stop-color="#7A5020"/>
+    </linearGradient>
+    <linearGradient id="coverFace" x1="15%" y1="5%" x2="85%" y2="95%">
+      <stop offset="0%" stop-color="#C03030"/><stop offset="45%" stop-color="#8C1C1C"/>
+      <stop offset="100%" stop-color="#520E0E"/>
+    </linearGradient>
+    <linearGradient id="coverSheen" x1="0%" y1="0%" x2="55%" y2="55%">
+      <stop offset="0%" stop-color="#fff" stop-opacity="0.10"/>
+      <stop offset="50%" stop-color="#fff" stop-opacity="0.03"/>
+      <stop offset="100%" stop-color="#fff" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="spineHL" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#F8E898"/><stop offset="100%" stop-color="#C49B5E"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-10%" width="150%" height="140%">
+      <feDropShadow dx="4" dy="8" stdDeviation="10" flood-color="#000" flood-opacity="0.55"/>
+    </filter>
+    <!-- Circle clip for safe-zone preview -->
+    <clipPath id="circleClip"><circle cx="96" cy="96" r="61.3"/></clipPath>
+  </defs>
+</svg>
+
+<!-- The icon SVG, reusable via inline -->
 <div class="sizes">
 
-  <!-- 216px -->
   <div class="sw">
     <svg class="icon" width="216" height="216" viewBox="0 0 192 192" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <!-- Ambient warm glow -->
-        <radialGradient id="glow" cx="48%" cy="62%" r="52%">
-          <stop offset="0%"   stop-color="#C49B5E" stop-opacity="0.28"/>
-          <stop offset="60%"  stop-color="#C49B5E" stop-opacity="0.08"/>
-          <stop offset="100%" stop-color="#C49B5E" stop-opacity="0"/>
-        </radialGradient>
-        <!-- Front cover crimson -->
-        <linearGradient id="cover" x1="15%" y1="5%" x2="85%" y2="95%">
-          <stop offset="0%"   stop-color="#C03030"/>
-          <stop offset="45%"  stop-color="#8C1C1C"/>
-          <stop offset="100%" stop-color="#520E0E"/>
-        </linearGradient>
-        <!-- Cover sheen (subtle diagonal highlight) -->
-        <linearGradient id="sheen" x1="0%" y1="0%" x2="60%" y2="60%">
-          <stop offset="0%"   stop-color="#FFFFFF" stop-opacity="0.10"/>
-          <stop offset="50%"  stop-color="#FFFFFF" stop-opacity="0.02"/>
-          <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0"/>
-        </linearGradient>
-        <!-- Spine face gold -->
-        <linearGradient id="spine" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%"   stop-color="#F0D080"/>
-          <stop offset="50%"  stop-color="#C49B5E"/>
-          <stop offset="100%" stop-color="#7A5020"/>
-        </linearGradient>
-        <!-- Top face (pages) -->
-        <linearGradient id="top" x1="80%" y1="100%" x2="20%" y2="0%">
-          <stop offset="0%"   stop-color="#E2D9C8"/>
-          <stop offset="100%" stop-color="#B8B0A0"/>
-        </linearGradient>
-        <!-- Spine edge highlight -->
-        <linearGradient id="spedge" x1="0%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%"   stop-color="#F8E8A0"/>
-          <stop offset="100%" stop-color="#C49B5E"/>
-        </linearGradient>
-        <!-- Drop shadow filter -->
-        <filter id="shadow" x="-18%" y="-8%" width="145%" height="135%">
-          <feDropShadow dx="5" dy="10" stdDeviation="12" flood-color="#000" flood-opacity="0.6"/>
-        </filter>
-        <!-- Spine glow filter -->
-        <filter id="sg" x="-60%" y="-5%" width="220%" height="110%">
-          <feGaussianBlur stdDeviation="2.5" result="b"/>
-          <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
-        </filter>
-      </defs>
-
-      <!-- Background -->
       <rect width="192" height="192" fill="#1A1715"/>
-
-      <!-- Ambient glow -->
-      <ellipse cx="92" cy="108" rx="75" ry="52" fill="url(#glow)"/>
-
+      <ellipse cx="96" cy="108" rx="62" ry="40" fill="url(#glow)"/>
       <g filter="url(#shadow)">
-
-        <!-- ① Top face — pages (cream parallelogram) -->
-        <polygon points="52,44 148,44 130,32 34,32" fill="url(#top)"/>
-        <!-- Page lines on top face -->
-        <line x1="50.2" y1="42" x2="146.2" y2="42" stroke="#C8C0B0" stroke-width="0.6" stroke-opacity="0.5"/>
-        <line x1="48.4" y1="40" x2="144.4" y2="40" stroke="#C8C0B0" stroke-width="0.6" stroke-opacity="0.45"/>
-        <line x1="46.6" y1="38" x2="142.6" y2="38" stroke="#C8C0B0" stroke-width="0.6" stroke-opacity="0.4"/>
-        <line x1="44.8" y1="36" x2="140.8" y2="36" stroke="#C8C0B0" stroke-width="0.5" stroke-opacity="0.35"/>
-        <line x1="43.0" y1="34" x2="139.0" y2="34" stroke="#C8C0B0" stroke-width="0.5" stroke-opacity="0.3"/>
-
-        <!-- ② Spine face — gold parallelogram -->
-        <polygon points="52,44 34,32 34,150 52,162" fill="url(#spine)"/>
-        <!-- Spine inner shadow -->
-        <polygon points="50,44 34,32 34,150 50,162" fill="#5A3A10" fill-opacity="0.18"/>
-
-        <!-- ③ Front cover — crimson rounded rect -->
-        <path d="M 60,44 L 140,44 Q 148,44 148,52 L 148,154 Q 148,162 140,162 L 60,162 Q 52,162 52,154 L 52,52 Q 52,44 60,44 Z"
-              fill="url(#cover)"/>
-        <!-- Cover sheen overlay -->
-        <path d="M 60,44 L 140,44 Q 148,44 148,52 L 148,154 Q 148,162 140,162 L 60,162 Q 52,162 52,154 L 52,52 Q 52,44 60,44 Z"
-              fill="url(#sheen)"/>
-
-        <!-- Cover inset border ornament -->
-        <path d="M 60,52 L 140,52 Q 142,52 142,54 L 142,154 Q 142,156 140,156 L 60,156 Q 58,156 58,154 L 58,54 Q 58,52 60,52 Z"
-              fill="none" stroke="#C49B5E" stroke-width="0.75" stroke-opacity="0.32"/>
-        <!-- Corner jewels -->
-        <circle cx="60"  cy="54"  r="1.4" fill="#C49B5E" fill-opacity="0.45"/>
-        <circle cx="140" cy="54"  r="1.4" fill="#C49B5E" fill-opacity="0.45"/>
-        <circle cx="60"  cy="154" r="1.4" fill="#C49B5E" fill-opacity="0.45"/>
-        <circle cx="140" cy="154" r="1.4" fill="#C49B5E" fill-opacity="0.45"/>
-        <!-- Thin horizontal accent line near top of cover -->
-        <line x1="58" y1="68" x2="142" y2="68" stroke="#C49B5E" stroke-width="0.7" stroke-opacity="0.22"/>
-
-        <!-- ④ Spine highlight edge (bright line where spine meets cover) -->
-        <line x1="52" y1="44" x2="52" y2="162" stroke="url(#spedge)" stroke-width="1.8" filter="url(#sg)"/>
-
-        <!-- Top-front corner edge highlight -->
-        <line x1="52" y1="44" x2="148" y2="44" stroke="#F2D488" stroke-width="1" stroke-opacity="0.35"/>
-
+        <!-- Top/pages face: front(68,62)→(134,62) back(55,55)→(121,55) -->
+        <polygon points="68,62 134,62 121,55 55,55" fill="url(#topFace)"/>
+        <line x1="65.4" y1="59.5" x2="131.4" y2="59.5" stroke="#C0B8A8" stroke-width="0.7" stroke-opacity="0.5"/>
+        <line x1="62.8" y1="57"   x2="128.8" y2="57"   stroke="#C0B8A8" stroke-width="0.6" stroke-opacity="0.4"/>
+        <!-- Spine face: (68,62)(55,55)(55,130)(68,139) -->
+        <polygon points="68,62 55,55 55,130 68,139" fill="url(#spineFace)"/>
+        <polygon points="66,62 55,55 55,130 66,139" fill="#5A3010" fill-opacity="0.18"/>
+        <!-- Front cover rounded -->
+        <path d="M75,62 L127,62 Q134,62 134,69 L134,132 Q134,139 127,139 L75,139 Q68,139 68,132 L68,69 Q68,62 75,62 Z" fill="url(#coverFace)"/>
+        <path d="M75,62 L127,62 Q134,62 134,69 L134,132 Q134,139 127,139 L75,139 Q68,139 68,132 L68,69 Q68,62 75,62 Z" fill="url(#coverSheen)"/>
+        <!-- Inset border -->
+        <path d="M75,68 L127,68 Q131,68 131,72 L131,133 Q131,137 127,137 L75,137 Q71,137 71,133 L71,72 Q71,68 75,68 Z"
+              fill="none" stroke="#C49B5E" stroke-width="0.9" stroke-opacity="0.30"/>
+        <!-- Corner dots -->
+        <circle cx="75"  cy="70"  r="2" fill="#C49B5E" fill-opacity="0.42"/>
+        <circle cx="127" cy="70"  r="2" fill="#C49B5E" fill-opacity="0.42"/>
+        <circle cx="75"  cy="135" r="2" fill="#C49B5E" fill-opacity="0.42"/>
+        <circle cx="127" cy="135" r="2" fill="#C49B5E" fill-opacity="0.42"/>
+        <!-- Gold accent line -->
+        <line x1="71" y1="78" x2="131" y2="78" stroke="#C49B5E" stroke-width="0.9" stroke-opacity="0.20"/>
+        <!-- Spine highlight edge -->
+        <line x1="68" y1="62" x2="68" y2="139" stroke="url(#spineHL)" stroke-width="2.4" opacity="0.80"/>
+        <!-- Top-front edge -->
+        <line x1="68" y1="62" x2="134" y2="62" stroke="#F2D488" stroke-width="1.2" stroke-opacity="0.28"/>
       </g>
     </svg>
     <span>216</span>
   </div>
 
-  <!-- 108px -->
   <div class="sw">
     <svg class="icon" width="108" height="108" viewBox="0 0 192 192" xmlns="http://www.w3.org/2000/svg">
       <rect width="192" height="192" fill="#1A1715"/>
-      <ellipse cx="92" cy="108" rx="75" ry="52" fill="url(#glow)"/>
+      <ellipse cx="96" cy="108" rx="62" ry="40" fill="url(#glow)"/>
       <g filter="url(#shadow)">
-        <polygon points="52,44 148,44 130,32 34,32" fill="url(#top)"/>
-        <line x1="50.2" y1="42" x2="146.2" y2="42" stroke="#C8C0B0" stroke-width="0.6" stroke-opacity="0.45"/>
-        <line x1="47"   y1="39" x2="143"   y2="39" stroke="#C8C0B0" stroke-width="0.5" stroke-opacity="0.38"/>
-        <line x1="43"   y1="35" x2="139"   y2="35" stroke="#C8C0B0" stroke-width="0.5" stroke-opacity="0.3"/>
-        <polygon points="52,44 34,32 34,150 52,162" fill="url(#spine)"/>
-        <path d="M 60,44 L 140,44 Q 148,44 148,52 L 148,154 Q 148,162 140,162 L 60,162 Q 52,162 52,154 L 52,52 Q 52,44 60,44 Z" fill="url(#cover)"/>
-        <path d="M 60,44 L 140,44 Q 148,44 148,52 L 148,154 Q 148,162 140,162 L 60,162 Q 52,162 52,154 L 52,52 Q 52,44 60,44 Z" fill="url(#sheen)"/>
-        <path d="M 60,52 L 140,52 Q 142,52 142,54 L 142,154 Q 142,156 140,156 L 60,156 Q 58,156 58,154 L 58,54 Q 58,52 60,52 Z"
-              fill="none" stroke="#C49B5E" stroke-width="0.75" stroke-opacity="0.32"/>
-        <circle cx="60"  cy="54"  r="1.4" fill="#C49B5E" fill-opacity="0.45"/>
-        <circle cx="140" cy="54"  r="1.4" fill="#C49B5E" fill-opacity="0.45"/>
-        <circle cx="60"  cy="154" r="1.4" fill="#C49B5E" fill-opacity="0.45"/>
-        <circle cx="140" cy="154" r="1.4" fill="#C49B5E" fill-opacity="0.45"/>
-        <line x1="52" y1="44" x2="52" y2="162" stroke="#F0D080" stroke-width="1.8" opacity="0.7"/>
-        <line x1="52" y1="44" x2="148" y2="44" stroke="#F2D488" stroke-width="1" stroke-opacity="0.35"/>
+        <polygon points="68,62 134,62 121,55 55,55" fill="url(#topFace)"/>
+        <line x1="65" y1="59" x2="131" y2="59" stroke="#C0B8A8" stroke-width="0.7" stroke-opacity="0.45"/>
+        <polygon points="68,62 55,55 55,130 68,139" fill="url(#spineFace)"/>
+        <path d="M75,62 L127,62 Q134,62 134,69 L134,132 Q134,139 127,139 L75,139 Q68,139 68,132 L68,69 Q68,62 75,62 Z" fill="url(#coverFace)"/>
+        <path d="M75,62 L127,62 Q134,62 134,69 L134,132 Q134,139 127,139 L75,139 Q68,139 68,132 L68,69 Q68,62 75,62 Z" fill="url(#coverSheen)"/>
+        <path d="M75,68 L127,68 Q131,68 131,72 L131,133 Q131,137 127,137 L75,137 Q71,137 71,133 L71,72 Q71,68 75,68 Z" fill="none" stroke="#C49B5E" stroke-width="0.9" stroke-opacity="0.28"/>
+        <circle cx="75" cy="70" r="2" fill="#C49B5E" fill-opacity="0.42"/>
+        <circle cx="127" cy="70" r="2" fill="#C49B5E" fill-opacity="0.42"/>
+        <circle cx="75" cy="135" r="2" fill="#C49B5E" fill-opacity="0.42"/>
+        <circle cx="127" cy="135" r="2" fill="#C49B5E" fill-opacity="0.42"/>
+        <line x1="68" y1="62" x2="68" y2="139" stroke="url(#spineHL)" stroke-width="2.4" opacity="0.80"/>
       </g>
     </svg>
     <span>108</span>
   </div>
 
-  <!-- 72px -->
   <div class="sw">
-    <svg class="icon" width="72" height="72" viewBox="0 0 192 192" xmlns="http://www.w3.org/2000/svg">
+    <svg class="icon" width="60" height="60" viewBox="0 0 192 192" xmlns="http://www.w3.org/2000/svg">
       <rect width="192" height="192" fill="#1A1715"/>
-      <g filter="url(#shadow)">
-        <polygon points="52,44 148,44 130,32 34,32" fill="url(#top)"/>
-        <polygon points="52,44 34,32 34,150 52,162" fill="url(#spine)"/>
-        <path d="M 60,44 L 140,44 Q 148,44 148,52 L 148,154 Q 148,162 140,162 L 60,162 Q 52,162 52,154 L 52,52 Q 52,44 60,44 Z" fill="url(#cover)"/>
-        <path d="M 60,52 L 140,52 Q 142,52 142,54 L 142,154 Q 142,156 140,156 L 60,156 Q 58,156 58,154 L 58,54 Q 58,52 60,52 Z"
-              fill="none" stroke="#C49B5E" stroke-width="0.75" stroke-opacity="0.3"/>
-        <line x1="52" y1="44" x2="52" y2="162" stroke="#F0D080" stroke-width="1.8" opacity="0.7"/>
-      </g>
+      <polygon points="68,62 134,62 121,55 55,55" fill="url(#topFace)"/>
+      <polygon points="68,62 55,55 55,130 68,139" fill="url(#spineFace)"/>
+      <path d="M75,62 L127,62 Q134,62 134,69 L134,132 Q134,139 127,139 L75,139 Q68,139 68,132 L68,69 Q68,62 75,62 Z" fill="url(#coverFace)"/>
+      <line x1="68" y1="62" x2="68" y2="139" stroke="#F0D080" stroke-width="2.5" opacity="0.8"/>
     </svg>
-    <span>72</span>
+    <span>60</span>
   </div>
 
-  <!-- 48px -->
-  <div class="sw">
-    <svg class="icon" width="48" height="48" viewBox="0 0 192 192" xmlns="http://www.w3.org/2000/svg">
-      <rect width="192" height="192" fill="#1A1715"/>
-      <polygon points="52,44 148,44 130,32 34,32" fill="#D0C8B8"/>
-      <polygon points="52,44 34,32 34,150 52,162" fill="#C49B5E"/>
-      <path d="M 60,44 L 140,44 Q 148,44 148,52 L 148,154 Q 148,162 140,162 L 60,162 Q 52,162 52,154 L 52,52 Q 52,44 60,44 Z" fill="#8C1C1C"/>
-      <line x1="52" y1="44" x2="52" y2="162" stroke="#F0D080" stroke-width="2" opacity="0.8"/>
-    </svg>
-    <span>48</span>
-  </div>
+</div>
 
-  <!-- 36px -->
-  <div class="sw">
-    <svg class="icon" width="36" height="36" viewBox="0 0 192 192" xmlns="http://www.w3.org/2000/svg">
-      <rect width="192" height="192" fill="#1A1715"/>
-      <polygon points="52,44 148,44 130,32 34,32" fill="#C8C0B0"/>
-      <polygon points="52,44 34,32 34,150 52,162" fill="#C49B5E"/>
-      <path d="M 60,44 L 140,44 Q 148,44 148,52 L 148,154 Q 148,162 140,162 L 60,162 Q 52,162 52,154 L 52,52 Q 52,44 60,44 Z" fill="#8C1C1C"/>
-      <line x1="52" y1="44" x2="52" y2="162" stroke="#F0D080" stroke-width="2.5" opacity="0.85"/>
-    </svg>
-    <span>36</span>
-  </div>
-
+<!-- Circle mask preview — simulates Android circular launcher -->
+<div style="display:flex;flex-direction:column;align-items:center;gap:14px">
+  <span style="font-family:'Cinzel',serif;font-size:10px;letter-spacing:.25em;color:rgba(255,255,255,.28);text-transform:uppercase">Circular launcher mask preview</span>
+  <svg class="icon circle-mask" width="120" height="120" viewBox="0 0 192 192" xmlns="http://www.w3.org/2000/svg">
+    <rect width="192" height="192" fill="#1A1715"/>
+    <ellipse cx="96" cy="108" rx="62" ry="40" fill="url(#glow)"/>
+    <g filter="url(#shadow)">
+      <polygon points="68,62 134,62 121,55 55,55" fill="url(#topFace)"/>
+      <line x1="65" y1="59" x2="131" y2="59" stroke="#C0B8A8" stroke-width="0.7" stroke-opacity="0.45"/>
+      <polygon points="68,62 55,55 55,130 68,139" fill="url(#spineFace)"/>
+      <path d="M75,62 L127,62 Q134,62 134,69 L134,132 Q134,139 127,139 L75,139 Q68,139 68,132 L68,69 Q68,62 75,62 Z" fill="url(#coverFace)"/>
+      <path d="M75,62 L127,62 Q134,62 134,69 L134,132 Q134,139 127,139 L75,139 Q68,139 68,132 L68,69 Q68,62 75,62 Z" fill="url(#coverSheen)"/>
+      <path d="M75,68 L127,68 Q131,68 131,72 L131,133 Q131,137 127,137 L75,137 Q71,137 71,133 L71,72 Q71,68 75,68 Z" fill="none" stroke="#C49B5E" stroke-width="0.9" stroke-opacity="0.28"/>
+      <circle cx="75" cy="70" r="2" fill="#C49B5E" fill-opacity="0.42"/>
+      <circle cx="127" cy="70" r="2" fill="#C49B5E" fill-opacity="0.42"/>
+      <circle cx="75" cy="135" r="2" fill="#C49B5E" fill-opacity="0.42"/>
+      <circle cx="127" cy="135" r="2" fill="#C49B5E" fill-opacity="0.42"/>
+      <line x1="68" y1="62" x2="68" y2="139" stroke="url(#spineHL)" stroke-width="2.4" opacity="0.80"/>
+    </g>
+  </svg>
+  <p class="note">Book fully visible within the circular mask</p>
 </div>
 
 <!-- Phone mockup -->
@@ -219,30 +169,22 @@
   <div class="home-row">
     <div class="aiw"><div class="ph"></div><span class="albl">Mail</span></div>
     <div class="aiw">
-      <svg class="icon" width="48" height="48" viewBox="0 0 192 192" xmlns="http://www.w3.org/2000/svg">
+      <svg class="icon" width="48" height="48" style="border-radius:11px" viewBox="0 0 192 192" xmlns="http://www.w3.org/2000/svg">
         <rect width="192" height="192" fill="#1A1715"/>
-        <ellipse cx="92" cy="108" rx="72" ry="48" fill="url(#glow)"/>
-        <g filter="url(#shadow)">
-          <polygon points="52,44 148,44 130,32 34,32" fill="url(#top)"/>
-          <polygon points="52,44 34,32 34,150 52,162" fill="url(#spine)"/>
-          <path d="M 60,44 L 140,44 Q 148,44 148,52 L 148,154 Q 148,162 140,162 L 60,162 Q 52,162 52,154 L 52,52 Q 52,44 60,44 Z" fill="url(#cover)"/>
-          <path d="M 60,44 L 140,44 Q 148,44 148,52 L 148,154 Q 148,162 140,162 L 60,162 Q 52,162 52,154 L 52,52 Q 52,44 60,44 Z" fill="url(#sheen)"/>
-          <line x1="52" y1="44" x2="52" y2="162" stroke="#F0D080" stroke-width="2" opacity="0.75"/>
-        </g>
+        <ellipse cx="96" cy="108" rx="62" ry="40" fill="url(#glow)"/>
+        <polygon points="68,62 134,62 121,55 55,55" fill="url(#topFace)"/>
+        <polygon points="68,62 55,55 55,130 68,139" fill="url(#spineFace)"/>
+        <path d="M75,62 L127,62 Q134,62 134,69 L134,132 Q134,139 127,139 L75,139 Q68,139 68,132 L68,69 Q68,62 75,62 Z" fill="url(#coverFace)"/>
+        <path d="M75,62 L127,62 Q134,62 134,69 L134,132 Q134,139 127,139 L75,139 Q68,139 68,132 L68,69 Q68,62 75,62 Z" fill="url(#coverSheen)"/>
+        <line x1="68" y1="62" x2="68" y2="139" stroke="#F0D080" stroke-width="2.5" opacity="0.8"/>
       </svg>
       <span class="albl">RCV Bible</span>
     </div>
     <div class="aiw"><div class="ph"></div><span class="albl">Notes</span></div>
   </div>
-  <div class="home-row" style="opacity:.3;">
-    <div class="ph"></div><div class="ph"></div><div class="ph"></div>
-  </div>
+  <div class="home-row" style="opacity:.3;"><div class="ph"></div><div class="ph"></div><div class="ph"></div></div>
   <div style="width:36px;height:3px;background:rgba(255,255,255,.12);border-radius:2px;margin-top:10px;"></div>
 </div>
-
-<footer style="font-family:'Cinzel',serif;font-size:10px;color:rgba(255,255,255,.18);letter-spacing:.2em;text-transform:uppercase;">
-  Ready to build into the app
-</footer>
 
 </body>
 </html>
