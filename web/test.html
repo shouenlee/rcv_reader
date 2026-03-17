@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>db.js smoke tests</title>
+  <script type="importmap">
+  {
+    "imports": {
+      "preact": "https://esm.sh/preact@10.25.4",
+      "preact/hooks": "https://esm.sh/preact@10.25.4/hooks",
+      "htm/preact": "https://esm.sh/htm@3.1.1/preact?external=preact",
+      "sql.js": "https://esm.sh/sql.js@1.12.0"
+    }
+  }
+  </script>
+  <style>
+    body { font-family: monospace; padding: 20px; background: #1a1a1a; color: #ccc; }
+    .pass { color: #4c4; }
+    .fail { color: #c44; }
+    pre { margin: 4px 0; }
+  </style>
+</head>
+<body>
+<h2>db.js smoke tests</h2>
+<div id="results"></div>
+<script type="module">
+import { initDb, getBooks, getVersesForChapter, getFootnotesForVerse } from './db.js';
+
+const el = document.getElementById('results');
+let passed = 0, failed = 0;
+
+function assert(name, condition, detail) {
+  if (condition) {
+    el.innerHTML += `<pre class="pass">✓ ${name}</pre>`;
+    passed++;
+  } else {
+    el.innerHTML += `<pre class="fail">✗ ${name} — ${detail || 'assertion failed'}</pre>`;
+    failed++;
+  }
+}
+
+try {
+  await initDb((loaded, total) => {});
+
+  // Books
+  const books = getBooks();
+  assert('getBooks returns 66 books', books.length === 66, `got ${books.length}`);
+  assert('First book is Genesis', books[0]?.name === 'Genesis', `got ${books[0]?.name}`);
+  assert('Last book is Revelation', books[65]?.name === 'Revelation', `got ${books[65]?.name}`);
+  assert('Genesis has 50 chapters', books[0]?.chapter_count === 50, `got ${books[0]?.chapter_count}`);
+  assert('Book 40 is Matthew', books[39]?.name === 'Matthew', `got ${books[39]?.name}`);
+
+  // Verses
+  const gen1 = getVersesForChapter(1, 1);
+  assert('Genesis 1 has 31 verses', gen1.length === 31, `got ${gen1.length}`);
+  assert('Gen 1:1 text starts with "In the beginning"', gen1[0]?.text.startsWith('In the beginning'), `got "${gen1[0]?.text.slice(0, 30)}"`);
+  assert('Gen 1:1 has footnotes', gen1[0]?.has_footnotes === 1, `got ${gen1[0]?.has_footnotes}`);
+
+  // Footnotes — use verse_number, NOT verse id
+  const fn = getFootnotesForVerse(1, 1, 1);
+  assert('Gen 1:1 has footnotes', fn.length > 0, `got ${fn.length}`);
+  assert('First footnote has a keyword', fn[0]?.keyword != null, `got ${fn[0]?.keyword}`);
+  assert('First footnote has content', fn[0]?.content?.length > 10, `content length: ${fn[0]?.content?.length}`);
+
+  // Edge case: verse_number vs id divergence
+  const matt1 = getVersesForChapter(40, 1);
+  assert('Matthew 1 has verses', matt1.length > 0, `got ${matt1.length}`);
+  const matt1v1 = matt1[0];
+  assert('Matt 1:1 verse_number is 1', matt1v1?.verse_number === 1, `got ${matt1v1?.verse_number}`);
+  assert('Matt 1:1 id is NOT 1 (diverges from verse_number)', matt1v1?.id !== 1, `id=${matt1v1?.id}, should not be 1`);
+  const mattFn = getFootnotesForVerse(40, 1, 1);
+  assert('Matt 1:1 footnotes fetched by verse_number work', mattFn.length > 0, `got ${mattFn.length}`);
+
+  el.innerHTML += `<pre>\n${passed} passed, ${failed} failed</pre>`;
+} catch (e) {
+  el.innerHTML += `<pre class="fail">FATAL: ${e.message}\n${e.stack}</pre>`;
+}
+</script>
+</body>
+</html>
