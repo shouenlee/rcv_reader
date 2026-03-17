@@ -1,4 +1,5 @@
-import initSqlJs from 'sql.js';
+// sql.js loaded via <script> tag in index.html (UMD build exposes window.initSqlJs).
+// esm.sh's ESM transform of sql.js pulls in Node.js fs polyfills that crash in browsers.
 
 let db = null;
 
@@ -8,7 +9,7 @@ let db = null;
  * @returns {Promise<void>}
  */
 export async function initDb(onProgress) {
-  const SQL = await initSqlJs({
+  const SQL = await window.initSqlJs({
     locateFile: () => 'https://cdn.jsdelivr.net/npm/sql.js@1.12.0/dist/sql-wasm.wasm'
   });
 
