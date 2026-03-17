@@ -2,14 +2,20 @@
 
 ## What This Project Is
 
-Offline Android Bible reader app (Recovery Version). Kotlin + Jetpack Compose + Room. All 66 books, 31K verses, 15K footnotes bundled in a pre-built SQLite database shipped in the APK. No network access.
+Bible reader (Recovery Version) available as an Android app and a static website. Same `bible.db` (66 books, 31K verses, 15K footnotes) powers both. No network access required after initial load.
 
 ## Build Commands
 
 ```bash
-# Build (requires JDK 17)
+# Android (requires JDK 17)
 export JAVA_HOME=/opt/homebrew/opt/openjdk@17
 ./gradlew assembleDebug
+
+# Web (local dev)
+cp app/src/main/assets/bible.db web/bible.db
+cd web && python3 -m http.server 8000
+# Open http://localhost:8000
+# Smoke tests: http://localhost:8000/test.html
 
 # Regenerate bible.db from raw data (requires Verses/ and Footnotes/ dirs)
 python3 buildscripts/import_bible_data.py
@@ -66,6 +72,31 @@ Room DB (assets/bible.db)
 
 5. **Book selection is two-step**: `selectBook()` sets `pendingBook`, navigation deferred until chapter is picked. This prevents loading chapter 1 prematurely.
 
+## Web Version Key Files
+
+| File | What it does |
+|------|-------------|
+| `web/index.html` | Entry point. Import map for Preact/HTM CDN. Inline loading screen with progress bar. Loads sql.js UMD from jsdelivr. |
+| `web/db.js` | sql.js init with streaming progress. Exports `initDb()`, `getBooks()`, `getVersesForChapter()`, `getFootnotesForVerse()`. |
+| `web/hooks/useReading.js` | State hook mirroring ReadingViewModel. `navigateTo()`, `selectBook()`, `toggleVerse()`, `computeAdjacentChapter()`. Persists to localStorage with Safari try/catch. |
+| `web/components/ReadingScreen.js` | Main layout. Desktop sidebar + mobile trigger bar + verse list + navigation modal. |
+| `web/components/VerseItem.js` | Verse row. CSS class toggling for expansion (not AnimatedVisibility). |
+| `web/components/FootnoteSection.js` | Gold keyword prefix, muted content. |
+| `web/components/NavigationModal.js` | Mobile slide-up modal with Books/Chapters tabs. Exports shared sub-components (SectionLabel, BookGrid, ChaptersGrid). |
+| `web/components/SidebarNavigation.js` | Desktop tabbed sidebar. Reuses sub-components from NavigationModal. |
+| `web/sw.js` | Service worker. Cache-first for bible.db + CDN. Stale-while-revalidate for app code. Posts UPDATE_AVAILABLE message. |
+| `web/app.js` | Bootstrap: initDb → hide loading → render App. Error/retry UI. SW registration + update banner listener. |
+| `.github/workflows/deploy.yml` | Copies bible.db to web/ and deploys to GitHub Pages on push to main. |
+
+## Web Critical Constraints
+
+1. **Single Preact instance**: The import map uses `?external=preact` on `htm/preact` to prevent htm from bundling its own Preact copy. Without this, hooks crash.
+2. **sql.js must use UMD build**: esm.sh's ESM transform of sql.js injects Node.js `fs` polyfills that crash in browsers. Load `sql-wasm.js` from jsdelivr via `<script>` tag instead.
+3. **Footnote queries use verse_number, not verse.id**: IDs are auto-incremented globally and diverge from verse_number after Genesis 1. `toggleVerse()` passes `verse.verse_number` to `getFootnotesForVerse()`.
+4. **bible.db is a deploy artifact**: Not committed in `web/` (listed in `web/.gitignore`). Copied from `app/src/main/assets/` by the GitHub Actions workflow at deploy time.
+
 ## Tech Versions
 
-Kotlin 2.1.0, AGP 8.7.3, KSP 2.1.0-1.0.29, Compose BOM 2024.12.01, Room 2.6.1, Lifecycle 2.8.7, compileSdk 35, minSdk 26, JDK 17.
+**Android:** Kotlin 2.1.0, AGP 8.7.3, KSP 2.1.0-1.0.29, Compose BOM 2024.12.01, Room 2.6.1, Lifecycle 2.8.7, compileSdk 35, minSdk 26, JDK 17.
+
+**Web:** Preact 10.25.4, HTM 3.1.1, sql.js 1.12.0 (all CDN, no npm). ES modules via import map. No build step.

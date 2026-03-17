@@ -22,3 +22,6 @@ Footnotes/
 __pycache__/
 *.pyc
 .pytest_cache/
+
+# Superpowers brainstorm sessions
+.superpowers/
