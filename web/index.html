@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#FAF8F4" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#1A1715" media="(prefers-color-scheme: dark)">
+  <title>RCV Bible</title>
+  <script type="importmap">
+  {
+    "imports": {
+      "preact": "https://esm.sh/preact@10.25.4",
+      "preact/hooks": "https://esm.sh/preact@10.25.4/hooks",
+      "htm/preact": "https://esm.sh/htm@3.1.1/preact?external=preact",
+      "sql.js": "https://esm.sh/sql.js@1.12.0"
+    }
+  }
+  </script>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    /* Inline loading screen — renders before style.css loads */
+    #loading {
+      position: fixed; inset: 0;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      background: #FAF8F4; color: #2C2C2C;
+      font-family: Georgia, 'Times New Roman', serif;
+      z-index: 9999;
+    }
+    @media (prefers-color-scheme: dark) {
+      #loading { background: #1A1715; color: #D4C5A9; }
+    }
+    #loading h1 { font-size: 24px; font-weight: 600; color: #8B6914; margin: 0 0 4px; }
+    @media (prefers-color-scheme: dark) {
+      #loading h1 { color: #C49B5E; }
+    }
+    #loading .subtitle { font-size: 12px; color: #998866; font-family: system-ui, sans-serif; margin: 0 0 32px; }
+    #loading .progress-track { width: 200px; height: 3px; background: #EEE8DC; border-radius: 2px; overflow: hidden; }
+    @media (prefers-color-scheme: dark) {
+      #loading .progress-track { background: #2C2520; }
+    }
+    #loading .progress-bar { width: 0%; height: 100%; background: #C49B5E; border-radius: 2px; transition: width 0.3s; }
+    #loading .status { font-size: 11px; color: #998866; font-family: system-ui, sans-serif; margin-top: 8px; }
+    #loading .error { color: #c44; margin-top: 16px; font-size: 13px; font-family: system-ui, sans-serif; display: none; }
+    #loading .retry-btn {
+      margin-top: 12px; padding: 8px 20px; background: #C49B5E; color: #1A1715;
+      border: none; border-radius: 6px; font-size: 13px; cursor: pointer; display: none;
+      font-family: system-ui, sans-serif;
+    }
+  </style>
+</head>
+<body>
+  <div id="loading">
+    <h1>RCV Bible</h1>
+    <p class="subtitle">Recovery Version</p>
+    <div class="progress-track">
+      <div class="progress-bar" id="progress-bar"></div>
+    </div>
+    <p class="status" id="loading-status">Loading Bible data...</p>
+    <p class="error" id="loading-error"></p>
+    <button class="retry-btn" id="retry-btn">Retry</button>
+  </div>
+
+  <div id="app"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
