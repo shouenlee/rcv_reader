@@ -4,16 +4,31 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import com.rcvreader.ui.theme.RCVReaderTheme
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.runtime.getValue
 import com.rcvreader.ui.reading.ReadingScreen
+import com.rcvreader.ui.settings.SettingsViewModel
+import com.rcvreader.ui.settings.ThemeMode
+import com.rcvreader.ui.theme.RCVReaderTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            RCVReaderTheme {
-                ReadingScreen()
+            val settingsViewModel: SettingsViewModel = viewModel()
+            val settings by settingsViewModel.settings.collectAsStateWithLifecycle()
+
+            val darkTheme = when (settings.themeMode) {
+                ThemeMode.LIGHT -> false
+                ThemeMode.DARK -> true
+                ThemeMode.SYSTEM -> isSystemInDarkTheme()
+            }
+
+            RCVReaderTheme(darkTheme = darkTheme) {
+                ReadingScreen(settingsViewModel = settingsViewModel)
             }
         }
     }

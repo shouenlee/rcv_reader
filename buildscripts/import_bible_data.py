@@ -85,6 +85,16 @@ def get_book_info(folder_name):
     return BOOK_MAP.get(folder_name)
 
 
+def format_abbreviation(folder_name):
+    """Insert a space between a leading digit and the book letters.
+
+    e.g. '1Sam' -> '1 Sam', '2John' -> '2 John', 'Gen' -> 'Gen'
+    """
+    if folder_name and folder_name[0].isdigit():
+        return folder_name[0] + " " + folder_name[1:]
+    return folder_name
+
+
 def extract_verse_text(line):
     """Strip the reference prefix from a verse line and return just the text.
 
@@ -180,7 +190,7 @@ def build_database(verses_dir, footnotes_dir, db_path):
 
         cursor.execute(
             "INSERT INTO books (id, name, abbreviation, testament, chapter_count) VALUES (?, ?, ?, ?, ?)",
-            (book_id, info["name"], folder_name, info["testament"], chapter_count),
+            (book_id, info["name"], format_abbreviation(folder_name), info["testament"], chapter_count),
         )
 
         # Import verses for each chapter
