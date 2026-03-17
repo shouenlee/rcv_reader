@@ -4,6 +4,8 @@ Offline Bible reader for the Recovery Version with tap-to-expand footnotes. Avai
 
 ## Web Version (GitHub Pages)
 
+**Live site:** https://shouenlee.github.io/rcv_reader/
+
 ### Local Development
 
 ```bash
