@@ -52,7 +52,7 @@ web/
 └── bible.db                ← Copied from app/src/main/assets/
 ```
 
-All JS files use ES modules with Preact + HTM imported from CDN (esm.sh or unpkg). No build step, no npm, no bundler.
+All JS files use ES modules with Preact + HTM imported from CDN with pinned versions (e.g., `esm.sh/preact@10.25.4`, `esm.sh/htm@3.1.1`). No build step, no npm, no bundler. All CDN URLs must include explicit version numbers so the service worker can cache them reliably.
 
 ## Responsive Layout
 
@@ -70,7 +70,7 @@ All JS files use ES modules with Preact + HTM imported from CDN (esm.sh or unpkg
 
 - Persistent left sidebar (200px) with:
   - Book grid (3-column, OT/NT sections with gold labels)
-  - Chapter grid (5-column, square buttons)
+  - Chapter grid (5-column, square buttons — narrower than mobile's 6-column to fit sidebar width)
   - Current book/chapter highlighted in gold
 - Main content area centered, max-width 680px for comfortable reading
 - Previous/next chapter links at top of content area
@@ -151,8 +151,8 @@ State shape (mirrors Android's `ReadingUiState`):
   verses: [],             // Verses for current chapter
   expandedVerseId: null,  // Which verse is expanded (by verse.id, not verse_number)
   expandedFootnotes: [],  // Footnotes for expanded verse
-  previousChapter: null,  // { book, chapter } or null (Gen 1 → null)
-  nextChapter: null,      // { book, chapter } or null (Rev 22 → null)
+  previousChapter: null,  // { book: <full Book object>, chapter: <number> } or null (Gen 1 → null)
+  nextChapter: null,      // { book: <full Book object>, chapter: <number> } or null (Rev 22 → null)
   pendingBook: null,      // Two-step selection: book chosen, waiting for chapter
 }
 ```
@@ -160,7 +160,7 @@ State shape (mirrors Android's `ReadingUiState`):
 Key methods:
 - `navigateTo(bookId, chapter)` — Load verses, compute adjacent chapters, clear expansion, persist to localStorage, scroll to top
 - `selectBook(book)` — Set pendingBook without loading verses (defers to chapter pick)
-- `toggleVerse(verse)` — Expand/collapse. Only if `has_footnotes`. Fetches footnotes on expand.
+- `toggleVerse(verse)` — Expand/collapse. Only if `has_footnotes`. On expand, fetches footnotes using `verse.book_id`, `verse.chapter`, and `verse.verse_number` (NOT `verse.id` — IDs are auto-incremented and diverge from verse numbers after Genesis 1).
 - `computeAdjacentChapter(book, chapter, direction)` — Handles chapter wrapping and book transitions. Returns null at Bible boundaries (Gen 1 prev, Rev 22 next).
 
 ### Persistence
@@ -168,6 +168,7 @@ Key methods:
 - `localStorage` key: `rcv_reader_last_position`
 - Stores: `{ bookId: number, chapter: number }`
 - Restored on page load; defaults to Genesis 1 if absent
+- All `localStorage` access wrapped in try/catch — Safari private browsing throws `QuotaExceededError`. Falls back to in-memory state (always starts at Genesis 1).
 
 ## Database Layer (db.js)
 
@@ -175,8 +176,8 @@ Uses sql.js (SQLite compiled to WebAssembly) to query the existing `bible.db` fi
 
 ### Initialization
 
-1. Load sql.js WASM from CDN
-2. Fetch `bible.db` as ArrayBuffer
+1. Load sql.js WASM from CDN (pinned version URL, e.g., `sql.js@1.12.0`)
+2. Fetch `bible.db` as ArrayBuffer — show progress bar using `response.body.getReader()` for streaming progress. On fetch failure: display error message with a "Retry" button. Validate response is `ok` and ArrayBuffer size is >1MB before proceeding.
 3. Open database with `new SQL.Database(new Uint8Array(buffer))`
 4. Database instance stored in module scope, reused by all queries
 
@@ -221,15 +222,16 @@ Inline in `index.html` (no external CSS dependency):
 
 ## Offline Strategy (Service Worker)
 
-### Cache-First Assets (immutable)
-- `bible.db` — content never changes
-- `sql-wasm.wasm` — versioned by CDN URL
-- `preact`, `htm` — versioned by CDN URL
+### Cache-First Assets (immutable, pinned CDN versions)
+- `bible.db` — content never changes. Service worker must NOT cache partial/failed responses (check `response.ok` and `Content-Length`).
+- `sql-wasm.wasm` — pinned CDN version URL
+- `preact`, `htm` — pinned CDN version URLs
 
 ### Stale-While-Revalidate (app code)
 - `index.html`, `style.css`, `*.js` files
 - Serve cached version instantly, fetch update in background
 - User gets updated version on next visit
+- When the service worker detects updated app code, post a message to the client. The app should show a subtle "Update available — tap to reload" banner.
 
 ### Return Visit Performance
 - 0 network requests required
@@ -241,7 +243,8 @@ Inline in `index.html` (no external CSS dependency):
 The `web/` directory is self-contained and deployable as-is:
 - Configure GitHub Pages to serve from `web/` directory (or copy to a `gh-pages` branch)
 - No build step required — all files are static
-- `bible.db` committed to the repo (10MB, within GitHub's 100MB file limit)
+- `bible.db` is NOT duplicated in `web/` — a deploy script or GitHub Actions workflow copies `app/src/main/assets/bible.db` to `web/bible.db` at deploy time. This avoids committing two copies of a 10MB binary (which would bloat the repo on every regeneration).
+- The `.gitignore` should exclude `web/bible.db` since it's a build artifact
 
 ## Scope Exclusions
 
