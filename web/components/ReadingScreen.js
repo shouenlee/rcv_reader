@@ -74,9 +74,8 @@ export function ReadingScreen({ state, navigateTo, selectBook, toggleVerse, scro
               ${currentBook?.name || ''}
             </button>
             <button class="chapter-pill" onClick=${() => openModal(1)}>
-              Ch. ${currentChapter}
+              Ch. ${currentChapter} <span class="dropdown-caret">▾</span>
             </button>
-            <span class="dropdown-caret">▾</span>
           </div>
 
           <!-- Desktop title (book + chapter, since trigger bar is hidden) -->

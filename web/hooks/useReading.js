@@ -112,17 +112,16 @@ export function useReading() {
   const toggleVerse = useCallback((verse) => {
     if (!verse.has_footnotes) return;
 
-    // Read current state to decide action
-    const currentExpanded = state.expandedVerseId;
-    if (currentExpanded === verse.id) {
-      setState(s => ({ ...s, expandedVerseId: null, expandedFootnotes: [] }));
-    } else {
-      // Compute footnotes OUTSIDE setState (no side effects in updater).
+    setState(s => {
+      if (s.expandedVerseId === verse.id) {
+        return { ...s, expandedVerseId: null, expandedFootnotes: [] };
+      }
+      // getFootnotesForVerse is synchronous (sql.js in-memory), safe inside updater.
       // Uses verse_number, NOT verse.id — IDs diverge from verse_numbers after Gen 1.
       const footnotes = getFootnotesForVerse(verse.book_id, verse.chapter, verse.verse_number);
-      setState(s => ({ ...s, expandedVerseId: verse.id, expandedFootnotes: footnotes }));
-    }
-  }, [state.expandedVerseId]);
+      return { ...s, expandedVerseId: verse.id, expandedFootnotes: footnotes };
+    });
+  }, []);
 
   return { state, navigateTo, selectBook, toggleVerse, scrollRef };
 }

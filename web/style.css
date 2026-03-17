@@ -293,7 +293,7 @@ html, body {
   font-weight: 500;
   color: var(--on-surface);
   background: var(--bg);
-  border: none;
+  border: 1.5px solid transparent;
   border-radius: 10px;
   cursor: pointer;
   transition: background 0.15s, border-color 0.15s;
@@ -310,6 +310,7 @@ html, body {
 
 .chapter-grid {
   display: grid;
+  grid-template-columns: repeat(6, 1fr);
   gap: 6px;
 }
 
