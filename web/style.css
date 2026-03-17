@@ -1,0 +1,447 @@
+/* === Theme Variables === */
+:root {
+  --bg: #FAF8F4;
+  --surface: #EEE8DC;
+  --primary: #8B6914;
+  --gold: #C49B5E;
+  --secondary: #998866;
+  --text: #2C2C2C;
+  --on-surface: #2C2C2C;
+  --footnote-highlight: rgba(196, 155, 94, 0.12);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1A1715;
+    --surface: #2C2520;
+    --primary: #C49B5E;
+    --gold: #C49B5E;
+    --secondary: #8B7355;
+    --text: #D4C5A9;
+    --on-surface: #D4C5A9;
+    --footnote-highlight: rgba(196, 155, 94, 0.12);
+  }
+}
+
+/* === Reset & Base === */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: Georgia, 'Times New Roman', serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* === Layout === */
+.app-layout {
+  display: flex;
+  height: 100vh;
+}
+
+/* Sidebar (desktop only) */
+.sidebar {
+  display: none;
+  width: 200px;
+  flex-shrink: 0;
+  background: var(--surface);
+  border-right: 1px solid rgba(128, 128, 128, 0.1);
+  overflow-y: auto;
+  padding: 16px;
+}
+
+@media (min-width: 769px) {
+  .sidebar { display: block; }
+}
+
+/* Main content area */
+.main-content {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.content-inner {
+  max-width: 680px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 0 16px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+@media (min-width: 769px) {
+  .content-inner { padding: 0 32px; }
+}
+
+/* === Typography === */
+.ui-text {
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+/* === Chapter Nav Links (top) === */
+.chapter-nav {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+}
+
+.chapter-nav a {
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 12px;
+  line-height: 20px;
+  color: var(--secondary);
+  text-decoration: none;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  background: none;
+  border: none;
+}
+
+.chapter-nav a:hover { opacity: 0.7; }
+
+/* === Trigger Bar (book name + chapter pill) === */
+.trigger-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 12px 0 4px;
+}
+
+.book-name {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--primary);
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+}
+
+.book-name:hover { opacity: 0.8; }
+
+.chapter-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  background: var(--surface);
+  border-radius: 8px;
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--on-surface);
+  opacity: 0.55;
+  cursor: pointer;
+  border: none;
+}
+
+.chapter-pill:hover { opacity: 0.7; }
+
+.dropdown-caret {
+  font-size: 11px;
+  color: var(--secondary);
+  opacity: 0.6;
+  margin-left: 4px;
+}
+
+/* Hide trigger bar on desktop (sidebar replaces it) */
+@media (min-width: 769px) {
+  .trigger-bar { display: none; }
+}
+
+/* Desktop: show centered book title */
+.desktop-title {
+  display: none;
+  text-align: center;
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--primary);
+  margin: 0 0 20px;
+  font-family: Georgia, 'Times New Roman', serif;
+}
+
+@media (min-width: 769px) {
+  .desktop-title { display: block; }
+}
+
+/* === Verse List === */
+.verse-list {
+  flex: 1;
+  padding-top: 8px;
+}
+
+/* === Verse Item === */
+.verse-item {
+  padding: 14px 20px;
+  transition: background-color 0.2s, border-color 0.2s;
+  border-left: 3px solid transparent;
+}
+
+.verse-item.has-footnotes {
+  cursor: pointer;
+}
+
+.verse-item.has-footnotes:hover {
+  background: rgba(128, 128, 128, 0.04);
+}
+
+.verse-item.expanded {
+  background: var(--footnote-highlight);
+  border-left-color: var(--gold);
+}
+
+.verse-number {
+  font-size: 11px;
+  color: var(--secondary);
+  vertical-align: super;
+  line-height: 0;
+  margin-right: 3px;
+  font-weight: normal;
+}
+
+.verse-text {
+  font-size: 17px;
+  line-height: 1.875;
+}
+
+.verse-dot {
+  color: var(--gold);
+  font-size: 12px;
+  margin-left: 3px;
+}
+
+/* === Footnote Section === */
+.footnote-section {
+  overflow: hidden;
+  max-height: 0;
+  opacity: 0;
+  transition: max-height 0.3s ease, opacity 0.25s ease;
+}
+
+.footnote-section.visible {
+  max-height: 2000px;
+  opacity: 1;
+}
+
+.footnote-divider {
+  height: 1px;
+  background: var(--secondary);
+  opacity: 0.3;
+  margin: 8px 0;
+}
+
+.footnote-item {
+  font-size: 12px;
+  line-height: 20px;
+  color: var(--text);
+  opacity: 0.7;
+  margin-bottom: 8px;
+}
+
+.footnote-keyword {
+  color: var(--gold);
+  font-weight: bold;
+  opacity: 1;
+}
+
+/* === Next Chapter Button (bottom of verse list) === */
+.next-chapter-btn {
+  display: block;
+  width: 100%;
+  padding: 16px;
+  text-align: center;
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 14px;
+  font-weight: bold;
+  color: var(--primary);
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.next-chapter-btn:hover { opacity: 0.7; }
+
+/* === Sidebar Internals === */
+.section-label {
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  font-weight: 600;
+  color: var(--gold);
+  margin-bottom: 8px;
+}
+
+.book-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  margin-bottom: 20px;
+}
+
+.book-btn {
+  padding: 10px 4px;
+  text-align: center;
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--on-surface);
+  background: var(--bg);
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.book-btn:hover { opacity: 0.8; }
+
+.book-btn.active {
+  background: rgba(196, 155, 94, 0.2);
+  border: 1.5px solid var(--gold);
+  font-weight: bold;
+  color: var(--primary);
+}
+
+.chapter-grid {
+  display: grid;
+  gap: 6px;
+}
+
+/* Sidebar: 5 columns */
+.sidebar .chapter-grid {
+  grid-template-columns: repeat(5, 1fr);
+}
+
+.chapter-btn {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--on-surface);
+  background: var(--bg);
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.chapter-btn:hover { opacity: 0.8; }
+
+.chapter-btn.active {
+  background: var(--gold);
+  color: var(--surface);
+  font-weight: bold;
+}
+
+/* === Navigation Modal (mobile only) === */
+.modal-overlay {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 1000;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.modal-overlay.open {
+  display: flex;
+}
+
+.modal-sheet {
+  width: 100%;
+  max-height: 70vh;
+  background: var(--surface);
+  border-radius: 24px 24px 0 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transform: translateY(100%);
+  transition: transform 0.3s ease;
+}
+
+.modal-overlay.open .modal-sheet {
+  transform: translateY(0);
+}
+
+.modal-handle {
+  width: 10%;
+  height: 4px;
+  background: var(--on-surface);
+  opacity: 0.2;
+  border-radius: 2px;
+  margin: 12px auto 4px;
+}
+
+/* Tabs */
+.modal-tabs {
+  display: flex;
+  border-bottom: 0.5px solid rgba(128, 128, 128, 0.1);
+}
+
+.modal-tab {
+  flex: 1;
+  padding: 12px;
+  text-align: center;
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 14px;
+  font-weight: normal;
+  color: var(--on-surface);
+  opacity: 0.5;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: opacity 0.15s, border-color 0.15s;
+}
+
+.modal-tab.active {
+  opacity: 1;
+  font-weight: 600;
+  color: var(--primary);
+  border-bottom-color: var(--gold);
+}
+
+.modal-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+}
+
+/* Modal chapters: 6 columns */
+.modal-content .chapter-grid {
+  grid-template-columns: repeat(6, 1fr);
+}
+
+/* Hide modal on desktop */
+@media (min-width: 769px) {
+  .modal-overlay { display: none !important; }
+}
+
+/* === Update Banner === */
+.update-banner {
+  position: fixed;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 10px 20px;
+  background: var(--primary);
+  color: var(--bg);
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 13px;
+  border-radius: 8px;
+  cursor: pointer;
+  z-index: 2000;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  display: none;
+}
+
+.update-banner.visible { display: block; }
