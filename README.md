@@ -1,8 +1,57 @@
 # RCV Bible Reader
 
-Offline Android app for reading the Recovery Version of the Bible with tap-to-expand footnotes. Kotlin, Jetpack Compose, Room, Material 3.
+Offline Bible reader for the Recovery Version with tap-to-expand footnotes. Available as an **Android app** (Kotlin, Jetpack Compose, Room) and a **static website** (Preact, sql.js) deployable to GitHub Pages.
 
-## Quick Start
+## Web Version (GitHub Pages)
+
+### Local Development
+
+```bash
+# Copy the database into web/ (excluded from git, deployed via CI)
+cp app/src/main/assets/bible.db web/bible.db
+
+# Serve locally (ES modules require a server — file:// won't work)
+cd web && python3 -m http.server 8000
+```
+
+Open http://localhost:8000. Run smoke tests at http://localhost:8000/test.html.
+
+### Deployment
+
+Push to `main` — the GitHub Actions workflow (`.github/workflows/deploy.yml`) automatically:
+1. Copies `bible.db` from Android assets into `web/`
+2. Deploys the `web/` directory to GitHub Pages
+
+To enable: go to **Settings > Pages > Source** and select **GitHub Actions**.
+
+Manual deploy: **Actions > Deploy to GitHub Pages > Run workflow**.
+
+### How It Works
+
+No build step, no npm. Preact + HTM loaded from CDN via an [import map](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/script/type/importmap). sql.js (SQLite compiled to WebAssembly) queries the same `bible.db` used by the Android app directly in the browser. A service worker caches everything for offline use after the first visit (~12MB download).
+
+```
+web/
+├── index.html              # Entry point + loading screen + import map
+├── style.css               # Light/dark theme, responsive layout
+├── app.js                  # Bootstrap: load DB → render app
+├── db.js                   # sql.js wrapper (3 query functions)
+├── sw.js                   # Service worker (offline caching)
+├── hooks/useReading.js     # State management (mirrors Android ViewModel)
+├── components/
+│   ├── ReadingScreen.js    # Main layout
+│   ├── VerseItem.js        # Verse row + footnote expansion
+│   ├── FootnoteSection.js  # Footnote display
+│   ├── NavigationModal.js  # Mobile book/chapter picker
+│   └── SidebarNavigation.js# Desktop tabbed sidebar
+└── test.html               # Browser smoke tests for db.js
+```
+
+---
+
+## Android App
+
+### Quick Start
 
 1. **Open** in Android Studio (Ladybug 2024.2+): File > Open > select `rcv_reader/`
 2. **Build**: Android Studio syncs automatically. Or from CLI:
