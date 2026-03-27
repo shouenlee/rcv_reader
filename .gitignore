@@ -23,5 +23,12 @@ __pycache__/
 *.pyc
 .pytest_cache/
 
+# Worktrees
+.worktrees/
+
+# Worktree symlinks
+Footnotes
+Verses
+
 # Superpowers brainstorm sessions
 .superpowers/

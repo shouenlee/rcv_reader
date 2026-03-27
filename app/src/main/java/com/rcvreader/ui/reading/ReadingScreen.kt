@@ -2,7 +2,6 @@ package com.rcvreader.ui.reading
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -18,7 +17,11 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -35,7 +38,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
@@ -46,7 +48,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.rcvreader.data.model.Book
 import com.rcvreader.ui.navigation.NavigationBottomSheet
-import com.rcvreader.ui.settings.SettingsPanel
+import com.rcvreader.ui.settings.SettingsDialog
 import com.rcvreader.ui.settings.SettingsViewModel
 import com.rcvreader.ui.theme.GoldAccent
 
@@ -77,7 +79,7 @@ fun ReadingScreen(
 
     var sheetOpen by remember { mutableStateOf(false) }
     var sheetInitialTab by remember { mutableIntStateOf(0) }
-    var settingsPanelOpen by remember { mutableStateOf(false) }
+    var settingsOpen by remember { mutableStateOf(false) }
 
     // 0f = fully expanded (at top), 1f = fully compact (scrolled)
     // Only returns to 0f when user scrolls all the way back to the very top
@@ -97,24 +99,27 @@ fun ReadingScreen(
         listState.scrollToItem(0)
     }
 
-    Box(
-        modifier = modifier
-            .fillMaxSize()
-            .pointerInput(settingsPanelOpen) {
-                var dragTotal = 0f
-                detectHorizontalDragGestures(
-                    onDragStart = { dragTotal = 0f },
-                    onDragEnd = {
-                        if (dragTotal < -60.dp.toPx()) settingsPanelOpen = true
-                        else if (dragTotal > 60.dp.toPx()) settingsPanelOpen = false
-                    },
-                    onHorizontalDrag = { change, amount ->
-                        change.consume()
-                        dragTotal += amount
+    // Scroll to a specific verse when navigating from bookmarks
+    val scrollTarget = uiState.scrollToVerseNumber
+    val autoExpandTarget = uiState.autoExpandFootnoteVerseNumber
+    LaunchedEffect(scrollTarget, uiState.verses.size) {
+        if (scrollTarget != null && uiState.verses.isNotEmpty()) {
+            val index = uiState.verses.indexOfFirst { it.verseNumber == scrollTarget }
+            if (index >= 0) {
+                listState.animateScrollToItem(index)
+                // Auto-expand footnotes if requested
+                if (autoExpandTarget != null) {
+                    val verse = uiState.verses[index]
+                    if (verse.hasFootnotes) {
+                        viewModel.toggleVerse(verse)
                     }
-                )
+                }
+                viewModel.clearScrollTarget()
             }
-    ) {
+        }
+    }
+
+    Box(modifier = modifier.fillMaxSize()) {
         Scaffold(containerColor = MaterialTheme.colorScheme.background) { padding ->
             Box(
                 modifier = Modifier
@@ -140,7 +145,13 @@ fun ReadingScreen(
                                 emptyList()
                             },
                             textSizeSp = settings.textSize.sp,
-                            onClick = { viewModel.toggleVerse(verse) }
+                            onClick = { viewModel.toggleVerse(verse) },
+                            isBookmarked = verse.id in uiState.bookmarkedVerseIds,
+                            bookmarkedFootnoteIds = uiState.bookmarkedFootnoteIds,
+                            onLongPress = { viewModel.toggleVerseBookmark(verse) },
+                            onFootnoteLongPress = { footnote ->
+                                viewModel.toggleFootnoteBookmark(footnote)
+                            }
                         )
                     }
                     item {
@@ -176,13 +187,28 @@ fun ReadingScreen(
             }
         }
 
-        // Settings panel
-        SettingsPanel(
+        // Settings icon — bottom-right, overlaid above Scaffold content
+        IconButton(
+            onClick = { settingsOpen = true },
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(16.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.Settings,
+                contentDescription = "Settings",
+                tint = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.4f)
+            )
+        }
+    }
+
+    // Settings dialog
+    if (settingsOpen) {
+        SettingsDialog(
             settings = settings,
             onThemeChange = { settingsViewModel.setThemeMode(it) },
             onTextSizeChange = { settingsViewModel.setTextSize(it) },
-            onDismiss = { settingsPanelOpen = false },
-            visible = settingsPanelOpen
+            onDismiss = { settingsOpen = false }
         )
     }
 

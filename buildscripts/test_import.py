@@ -137,3 +137,48 @@ def test_psalms_superscription_footnotes(bible_db):
     count = cursor.fetchone()[0]
     assert count > 0
     conn.close()
+
+
+@pytest.fixture
+def built_db(tmp_path):
+    """Build a real bible.db from the Verses/Footnotes directories."""
+    project_root = Path(__file__).parent.parent
+    verses_dir = project_root / "Verses"
+    footnotes_dir = project_root / "Footnotes"
+    db_path = tmp_path / "bible.db"
+    build_database(str(verses_dir), str(footnotes_dir), str(db_path))
+    return str(db_path)
+
+
+def test_fts_verses_table_exists(built_db):
+    conn = sqlite3.connect(built_db)
+    cursor = conn.cursor()
+    cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='verses_fts'")
+    assert cursor.fetchone() is not None
+    conn.close()
+
+
+def test_fts_footnotes_table_exists(built_db):
+    conn = sqlite3.connect(built_db)
+    cursor = conn.cursor()
+    cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='footnotes_fts'")
+    assert cursor.fetchone() is not None
+    conn.close()
+
+
+def test_fts_verses_search_returns_results(built_db):
+    conn = sqlite3.connect(built_db)
+    cursor = conn.cursor()
+    cursor.execute("SELECT rowid FROM verses_fts WHERE verses_fts MATCH 'grace' LIMIT 5")
+    rows = cursor.fetchall()
+    assert len(rows) > 0
+    conn.close()
+
+
+def test_fts_footnotes_search_returns_results(built_db):
+    conn = sqlite3.connect(built_db)
+    cursor = conn.cursor()
+    cursor.execute("SELECT rowid FROM footnotes_fts WHERE footnotes_fts MATCH 'grace' LIMIT 5")
+    rows = cursor.fetchall()
+    assert len(rows) > 0
+    conn.close()
