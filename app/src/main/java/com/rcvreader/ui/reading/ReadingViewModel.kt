@@ -5,10 +5,12 @@ import android.content.Context
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.rcvreader.data.db.BibleDatabase
+import com.rcvreader.data.db.BookmarkDatabase
 import com.rcvreader.data.model.Book
 import com.rcvreader.data.model.Footnote
 import com.rcvreader.data.model.Verse
 import com.rcvreader.data.repository.BibleRepository
+import com.rcvreader.data.repository.BookmarkRepository
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -27,12 +29,19 @@ data class ReadingUiState(
     val previousChapter: Pair<Book, Int>? = null,
     val nextChapter: Pair<Book, Int>? = null,
     val pendingBook: Book? = null,
+    val bookmarkedVerseIds: Set<Int> = emptySet(),
+    val bookmarkedFootnoteIds: Set<Int> = emptySet(),
+    val scrollToVerseNumber: Int? = null,
+    val autoExpandFootnoteVerseNumber: Int? = null,
 )
 
 class ReadingViewModel(application: Application) : AndroidViewModel(application) {
     private val db = BibleDatabase.getInstance(application)
     private val repository = BibleRepository(
         db.bookDao(), db.verseDao(), db.footnoteDao(), db.searchDao()
+    )
+    private val bookmarkRepository = BookmarkRepository(
+        BookmarkDatabase.getInstance(application).bookmarkDao()
     )
 
     private val prefs = application.getSharedPreferences("rcv_reader", Context.MODE_PRIVATE)
@@ -42,6 +51,7 @@ class ReadingViewModel(application: Application) : AndroidViewModel(application)
 
     private var allBooks: List<Book> = emptyList()
     private var versesJob: Job? = null
+    private var bookmarkJob: Job? = null
 
     init {
         viewModelScope.launch {
@@ -65,6 +75,7 @@ class ReadingViewModel(application: Application) : AndroidViewModel(application)
     fun navigateTo(bookId: Int, chapter: Int) {
         _uiState.update { it.copy(pendingBook = null) }
         versesJob?.cancel()
+        bookmarkJob?.cancel()
         versesJob = viewModelScope.launch {
             val book = repository.getBookById(bookId) ?: return@launch
 
@@ -91,6 +102,34 @@ class ReadingViewModel(application: Application) : AndroidViewModel(application)
                 _uiState.update { it.copy(verses = verses) }
             }
         }
+        bookmarkJob = viewModelScope.launch {
+            launch {
+                bookmarkRepository.getBookmarkedVerseIds(bookId, chapter).collect { ids ->
+                    _uiState.update { it.copy(bookmarkedVerseIds = ids) }
+                }
+            }
+            launch {
+                bookmarkRepository.getBookmarkedFootnoteIds(bookId, chapter).collect { ids ->
+                    _uiState.update { it.copy(bookmarkedFootnoteIds = ids) }
+                }
+            }
+        }
+    }
+
+    fun navigateToVerse(bookId: Int, chapter: Int, verseNumber: Int, expandFootnotes: Boolean) {
+        _uiState.update {
+            it.copy(
+                scrollToVerseNumber = verseNumber,
+                autoExpandFootnoteVerseNumber = if (expandFootnotes) verseNumber else null
+            )
+        }
+        navigateTo(bookId, chapter)
+    }
+
+    fun clearScrollTarget() {
+        _uiState.update {
+            it.copy(scrollToVerseNumber = null, autoExpandFootnoteVerseNumber = null)
+        }
     }
 
     fun toggleVerse(verse: Verse) {
@@ -113,6 +152,20 @@ class ReadingViewModel(application: Application) : AndroidViewModel(application)
                     )
                 }
             }
+        }
+    }
+
+    fun toggleVerseBookmark(verse: Verse) {
+        val book = _uiState.value.currentBook ?: return
+        viewModelScope.launch {
+            bookmarkRepository.toggleVerseBookmark(verse, book.name, book.abbreviation)
+        }
+    }
+
+    fun toggleFootnoteBookmark(footnote: Footnote) {
+        val book = _uiState.value.currentBook ?: return
+        viewModelScope.launch {
+            bookmarkRepository.toggleFootnoteBookmark(footnote, book.name, book.abbreviation)
         }
     }
 

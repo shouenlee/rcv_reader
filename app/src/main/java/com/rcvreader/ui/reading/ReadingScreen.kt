@@ -99,6 +99,26 @@ fun ReadingScreen(
         listState.scrollToItem(0)
     }
 
+    // Scroll to a specific verse when navigating from bookmarks
+    val scrollTarget = uiState.scrollToVerseNumber
+    val autoExpandTarget = uiState.autoExpandFootnoteVerseNumber
+    LaunchedEffect(scrollTarget, uiState.verses.size) {
+        if (scrollTarget != null && uiState.verses.isNotEmpty()) {
+            val index = uiState.verses.indexOfFirst { it.verseNumber == scrollTarget }
+            if (index >= 0) {
+                listState.animateScrollToItem(index)
+                // Auto-expand footnotes if requested
+                if (autoExpandTarget != null) {
+                    val verse = uiState.verses[index]
+                    if (verse.hasFootnotes) {
+                        viewModel.toggleVerse(verse)
+                    }
+                }
+                viewModel.clearScrollTarget()
+            }
+        }
+    }
+
     Box(modifier = modifier.fillMaxSize()) {
         Scaffold(containerColor = MaterialTheme.colorScheme.background) { padding ->
             Box(
@@ -125,7 +145,13 @@ fun ReadingScreen(
                                 emptyList()
                             },
                             textSizeSp = settings.textSize.sp,
-                            onClick = { viewModel.toggleVerse(verse) }
+                            onClick = { viewModel.toggleVerse(verse) },
+                            isBookmarked = verse.id in uiState.bookmarkedVerseIds,
+                            bookmarkedFootnoteIds = uiState.bookmarkedFootnoteIds,
+                            onLongPress = { viewModel.toggleVerseBookmark(verse) },
+                            onFootnoteLongPress = { footnote ->
+                                viewModel.toggleFootnoteBookmark(footnote)
+                            }
                         )
                     }
                     item {
