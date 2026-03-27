@@ -23,6 +23,8 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.rcvreader.ui.bookmarks.BookmarkScreen
+import com.rcvreader.ui.bookmarks.BookmarkViewModel
 import com.rcvreader.ui.reading.ReadingScreen
 import com.rcvreader.ui.reading.ReadingViewModel
 import com.rcvreader.ui.search.SearchScreen
@@ -30,6 +32,8 @@ import com.rcvreader.ui.search.SearchViewModel
 import com.rcvreader.ui.settings.SettingsViewModel
 import com.rcvreader.ui.settings.ThemeMode
 import com.rcvreader.ui.theme.RCVReaderTheme
+
+private enum class ActivePane { BOOKMARKS, READING, SEARCH }
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -39,6 +43,7 @@ class MainActivity : ComponentActivity() {
             val settingsViewModel: SettingsViewModel = viewModel()
             val readingViewModel: ReadingViewModel = viewModel()
             val searchViewModel: SearchViewModel = viewModel()
+            val bookmarkViewModel: BookmarkViewModel = viewModel()
 
             val settings by settingsViewModel.settings.collectAsStateWithLifecycle()
             val readingUiState by readingViewModel.uiState.collectAsStateWithLifecycle()
@@ -59,15 +64,21 @@ class MainActivity : ComponentActivity() {
                 val screenWidth = LocalConfiguration.current.screenWidthDp.dp
 
                 val keyboardController = LocalSoftwareKeyboardController.current
-                var searchVisible by remember { mutableStateOf(false) }
+                var activePane by remember { mutableStateOf(ActivePane.READING) }
 
-                // Hide keyboard whenever search pane closes
-                LaunchedEffect(searchVisible) {
-                    if (!searchVisible) keyboardController?.hide()
+                // Hide keyboard whenever leaving search pane
+                LaunchedEffect(activePane) {
+                    if (activePane != ActivePane.SEARCH) keyboardController?.hide()
+                }
+
+                val targetOffset = when (activePane) {
+                    ActivePane.BOOKMARKS -> screenWidth
+                    ActivePane.READING -> 0.dp
+                    ActivePane.SEARCH -> -screenWidth
                 }
 
                 val offsetX by animateDpAsState(
-                    targetValue = if (searchVisible) -screenWidth else 0.dp,
+                    targetValue = targetOffset,
                     animationSpec = tween(durationMillis = 280),
                     label = "pane-offset"
                 )
@@ -75,13 +86,27 @@ class MainActivity : ComponentActivity() {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .pointerInput(searchVisible) {
+                        .pointerInput(activePane) {
                             var dragTotal = 0f
                             detectHorizontalDragGestures(
                                 onDragStart = { dragTotal = 0f },
                                 onDragEnd = {
-                                    if (dragTotal < -60.dp.toPx()) searchVisible = true
-                                    else if (dragTotal > 60.dp.toPx()) searchVisible = false
+                                    val threshold = 60.dp.toPx()
+                                    if (dragTotal < -threshold) {
+                                        // Swipe left: Reading -> Search, Bookmarks -> Reading
+                                        activePane = when (activePane) {
+                                            ActivePane.READING -> ActivePane.SEARCH
+                                            ActivePane.BOOKMARKS -> ActivePane.READING
+                                            ActivePane.SEARCH -> ActivePane.SEARCH
+                                        }
+                                    } else if (dragTotal > threshold) {
+                                        // Swipe right: Reading -> Bookmarks, Search -> Reading
+                                        activePane = when (activePane) {
+                                            ActivePane.READING -> ActivePane.BOOKMARKS
+                                            ActivePane.SEARCH -> ActivePane.READING
+                                            ActivePane.BOOKMARKS -> ActivePane.BOOKMARKS
+                                        }
+                                    }
                                 },
                                 onHorizontalDrag = { change, amount ->
                                     change.consume()
@@ -90,7 +115,25 @@ class MainActivity : ComponentActivity() {
                             )
                         }
                 ) {
-                    // Reading screen
+                    // Bookmarks screen (left of reading)
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .offset(x = offsetX - screenWidth)
+                    ) {
+                        BookmarkScreen(
+                            viewModel = bookmarkViewModel,
+                            onNavigate = { bookId, chapter, verseNumber, isFootnote ->
+                                readingViewModel.navigateToVerse(
+                                    bookId, chapter, verseNumber, isFootnote
+                                )
+                                activePane = ActivePane.READING
+                            },
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    }
+
+                    // Reading screen (center)
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
@@ -103,7 +146,7 @@ class MainActivity : ComponentActivity() {
                         )
                     }
 
-                    // Search screen
+                    // Search screen (right of reading)
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
@@ -111,12 +154,12 @@ class MainActivity : ComponentActivity() {
                     ) {
                         SearchScreen(
                             viewModel = searchViewModel,
-                            searchVisible = searchVisible,
+                            searchVisible = activePane == ActivePane.SEARCH,
                             onNavigate = { bookId, chapter ->
                                 readingViewModel.navigateTo(bookId, chapter)
-                                searchVisible = false
+                                activePane = ActivePane.READING
                             },
-                            onCancel = { searchVisible = false },
+                            onCancel = { activePane = ActivePane.READING },
                             modifier = Modifier.fillMaxSize()
                         )
                     }
