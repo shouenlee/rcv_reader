@@ -33,7 +33,11 @@ data class ReadingUiState(
     val bookmarkedFootnoteIds: Set<Int> = emptySet(),
     val scrollToVerseNumber: Int? = null,
     val autoExpandFootnoteVerseNumber: Int? = null,
+    val backStack: List<Pair<Book, Int>> = emptyList(),
+    val forwardStack: List<Pair<Book, Int>> = emptyList(),
 )
+
+private const val MAX_HISTORY = 50
 
 class ReadingViewModel(application: Application) : AndroidViewModel(application) {
     private val db = BibleDatabase.getInstance(application)
@@ -57,7 +61,10 @@ class ReadingViewModel(application: Application) : AndroidViewModel(application)
         viewModelScope.launch {
             val books = repository.getAllBooks().first()
             allBooks = books
-            _uiState.update { it.copy(books = books) }
+
+            val back = deserializeStack(prefs.getString("nav_back_stack", "") ?: "", books)
+            val fwd = deserializeStack(prefs.getString("nav_forward_stack", "") ?: "", books)
+            _uiState.update { it.copy(books = books, backStack = back, forwardStack = fwd) }
 
             val savedBookId = prefs.getInt("last_book_id", 1)
             val savedChapter = prefs.getInt("last_chapter", 1)
@@ -73,6 +80,43 @@ class ReadingViewModel(application: Application) : AndroidViewModel(application)
     }
 
     fun navigateTo(bookId: Int, chapter: Int) {
+        val fromBook = _uiState.value.currentBook
+        val fromChapter = _uiState.value.currentChapter
+        if (fromBook != null && (fromBook.id != bookId || fromChapter != chapter)) {
+            val newBack = (_uiState.value.backStack + (fromBook to fromChapter)).takeLast(MAX_HISTORY)
+            _uiState.update { it.copy(backStack = newBack, forwardStack = emptyList()) }
+            persistStacks(newBack, emptyList())
+        }
+        loadChapter(bookId, chapter)
+    }
+
+    fun navigateBack() {
+        val backStack = _uiState.value.backStack
+        if (backStack.isEmpty()) return
+        val fromBook = _uiState.value.currentBook ?: return
+        val fromChapter = _uiState.value.currentChapter
+        val destination = backStack.last()
+        val newBack = backStack.dropLast(1)
+        val newFwd = listOf(fromBook to fromChapter) + _uiState.value.forwardStack
+        _uiState.update { it.copy(backStack = newBack, forwardStack = newFwd) }
+        persistStacks(newBack, newFwd)
+        loadChapter(destination.first.id, destination.second)
+    }
+
+    fun navigateForward() {
+        val forwardStack = _uiState.value.forwardStack
+        if (forwardStack.isEmpty()) return
+        val fromBook = _uiState.value.currentBook ?: return
+        val fromChapter = _uiState.value.currentChapter
+        val destination = forwardStack.first()
+        val newBack = (_uiState.value.backStack + (fromBook to fromChapter)).takeLast(MAX_HISTORY)
+        val newFwd = forwardStack.drop(1)
+        _uiState.update { it.copy(backStack = newBack, forwardStack = newFwd) }
+        persistStacks(newBack, newFwd)
+        loadChapter(destination.first.id, destination.second)
+    }
+
+    private fun loadChapter(bookId: Int, chapter: Int) {
         _uiState.update { it.copy(pendingBook = null) }
         versesJob?.cancel()
         bookmarkJob?.cancel()
@@ -113,6 +157,28 @@ class ReadingViewModel(application: Application) : AndroidViewModel(application)
                     _uiState.update { it.copy(bookmarkedFootnoteIds = ids) }
                 }
             }
+        }
+    }
+
+    private fun persistStacks(back: List<Pair<Book, Int>>, fwd: List<Pair<Book, Int>>) {
+        prefs.edit()
+            .putString("nav_back_stack", serializeStack(back))
+            .putString("nav_forward_stack", serializeStack(fwd))
+            .apply()
+    }
+
+    private fun serializeStack(stack: List<Pair<Book, Int>>): String =
+        stack.joinToString("|") { (book, chapter) -> "${book.id}:$chapter" }
+
+    private fun deserializeStack(encoded: String, books: List<Book>): List<Pair<Book, Int>> {
+        if (encoded.isBlank()) return emptyList()
+        return encoded.split("|").mapNotNull { entry ->
+            val parts = entry.split(":")
+            if (parts.size != 2) return@mapNotNull null
+            val bookId = parts[0].toIntOrNull() ?: return@mapNotNull null
+            val chapter = parts[1].toIntOrNull() ?: return@mapNotNull null
+            val book = books.find { it.id == bookId } ?: return@mapNotNull null
+            book to chapter
         }
     }
 

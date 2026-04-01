@@ -187,6 +187,35 @@ fun ReadingScreen(
             }
         }
 
+        // Back / Forward history buttons — bottom-left
+        if (uiState.backStack.isNotEmpty() || uiState.forwardStack.isNotEmpty()) {
+            Row(
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .padding(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                uiState.backStack.lastOrNull()?.let { (book, chapter) ->
+                    TextButton(onClick = { viewModel.navigateBack() }) {
+                        Text(
+                            text = "\u21A9 ${book.abbreviation} $chapter",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.4f)
+                        )
+                    }
+                }
+                uiState.forwardStack.firstOrNull()?.let { (book, chapter) ->
+                    TextButton(onClick = { viewModel.navigateForward() }) {
+                        Text(
+                            text = "${book.abbreviation} $chapter \u21AA",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.4f)
+                        )
+                    }
+                }
+            }
+        }
+
         // Settings icon — bottom-right, overlaid above Scaffold content
         IconButton(
             onClick = { settingsOpen = true },
