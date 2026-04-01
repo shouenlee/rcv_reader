@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Import Bible data from raw text files into a SQLite database."""
 
+import html
 import os
 import re
 import sqlite3
@@ -107,7 +108,7 @@ def extract_verse_text(line):
     # Try Ch:V format first — find ":digit(s) " pattern
     m = re.search(r':\d+\s', line)
     if m:
-        return line[m.end():]
+        return html.unescape(line[m.end():])
 
     # Single-chapter format: find the LAST bare number followed by space+non-digit
     # Use finditer to get the last match (avoids matching "2" in "2 John")
@@ -117,10 +118,10 @@ def extract_verse_text(line):
         # The text starts after the digit and space
         # Find position after the digit
         digit_end = last.end()
-        return line[digit_end:]
+        return html.unescape(line[digit_end:])
 
     # Fallback: return the whole line
-    return line
+    return html.unescape(line)
 
 
 def parse_footnote_content(text):

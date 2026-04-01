@@ -85,7 +85,13 @@ fun VerseItem(
                 append("${verse.verseNumber}")
             }
             append("  ")
-            append(verse.text)
+            append(verse.text
+                .replace("&mdash;", "\u2014")
+                .replace("&ndash;", "\u2013")
+                .replace("&hellip;", "\u2026")
+                .replace("&amp;", "&")
+                .replace("&lt;", "<")
+                .replace("&gt;", ">"))
             if (verse.hasFootnotes || isBookmarked) {
                 append("  ")
             }
