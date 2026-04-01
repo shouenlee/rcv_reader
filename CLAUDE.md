@@ -39,7 +39,7 @@ Room DB (assets/bible.db)
 ```
 
 Two separate SharedPreferences stores:
-- `"rcv_reader"` — last-read position (book ID + chapter), managed by `ReadingViewModel`
+- `"rcv_reader"` — last-read position (book ID + chapter) + serialized back/forward nav stacks, managed by `ReadingViewModel`
 - `"rcv_reader_settings"` — user preferences (theme mode, text size), managed by `SettingsViewModel`
 
 ### Key files
@@ -54,15 +54,28 @@ Two separate SharedPreferences stores:
 | `app/.../data/db/BookDao.kt` | `getAllBooks(): Flow<List<Book>>`, `getBookById(): suspend` |
 | `app/.../data/db/VerseDao.kt` | `getVersesForChapter(): Flow<List<Verse>>` |
 | `app/.../data/db/FootnoteDao.kt` | `getFootnotesForVerse(): suspend List<Footnote>` |
-| `app/.../data/repository/BibleRepository.kt` | Thin facade over all three DAOs. |
-| `app/.../ui/reading/ReadingViewModel.kt` | State: books, currentBook, currentChapter, verses, expandedVerseId, expandedFootnotes, previousChapter, nextChapter, pendingBook. Key methods: `navigateTo()`, `selectBook()`, `toggleVerse()`. Persists last position to SharedPreferences. Cancels previous `versesJob` before starting new collection. Uses `Flow.first()` in init (not collect) to avoid re-navigation. |
-| `app/.../ui/reading/ReadingScreen.kt` | Main composable. Prev/next chapter links at top, book name + chapter pill trigger bar, LazyColumn of VerseItems, next chapter button at bottom. Opens NavigationBottomSheet. Accepts `SettingsViewModel` for settings panel integration. |
-| `app/.../ui/reading/VerseItem.kt` | Verse row. Superscript verse number, gold dot for footnotes, tap to expand. Gold left border when expanded. Only clickable if `hasFootnotes`. |
-| `app/.../ui/reading/FootnoteSection.kt` | AnimatedVisibility. Gold keyword prefix, muted content text. |
+| `app/.../data/db/SearchDao.kt` | Raw FTS5 queries via `@RawQuery`. Used by `BibleRepository.search()` for verse and footnote full-text search. |
+| `app/.../data/db/BookmarkDatabase.kt` | Separate Room singleton for user bookmarks. Stored in `bookmarks.db` (not `bible.db`). Version 2, `fallbackToDestructiveMigration()`. |
+| `app/.../data/db/BookmarkDao.kt` | Queries bookmarked verse/footnote IDs by book+chapter (for per-chapter highlight), plus CRUD for `Bookmark` rows. |
+| `app/.../data/model/SearchResult.kt` | Plain data class (not a Room entity). Fields: id, bookId, bookName, abbreviation, chapter, verseNumber, text, keyword, tier (1=exact phrase / 2=all words / 3=any word). |
+| `app/.../data/model/SearchScope.kt` | Enum: `ALL`, `OT`, `NT`, `THIS_BOOK`. |
+| `app/.../data/model/Bookmark.kt` | Room entity (`bookmarks` table). `type` is `"verse"` or `"footnote"`. Stores denormalized bookName, abbreviation, chapter, verseNumber, previewText, and optional keyword for footnote bookmarks. |
+| `app/.../data/repository/BibleRepository.kt` | Facade over BookDao, VerseDao, FootnoteDao, SearchDao. `search()` runs tiered FTS5 queries (exact phrase → all words → any word), interleaves verse + footnote results, caps at 200. `sanitizeQuery()` strips FTS5 special chars and tokens < 2 chars. |
+| `app/.../data/repository/BookmarkRepository.kt` | `toggleVerseBookmark()` / `toggleFootnoteBookmark()` (insert or delete). `getBookmarkedVerseIds()` / `getBookmarkedFootnoteIds()` return `Flow<Set<Int>>` for the current chapter. `getAllBookmarks()` returns all rows as Flow. |
+| `app/.../ui/reading/ReadingViewModel.kt` | State: books, currentBook, currentChapter, verses, expandedVerseId, expandedFootnotes, previousChapter, nextChapter, pendingBook, bookmarkedVerseIds, bookmarkedFootnoteIds, scrollToVerseNumber, autoExpandFootnoteVerseNumber, backStack, forwardStack. Key methods: `navigateTo()`, `navigateBack()`, `navigateForward()`, `navigateToVerse()`, `selectBook()`, `toggleVerse()`, `toggleVerseBookmark()`, `toggleFootnoteBookmark()`, `clearScrollTarget()`. Back/forward stacks capped at 50, serialized to SharedPreferences as `"bookId:chapter"` pairs joined by `\|`. |
+| `app/.../ui/reading/ReadingScreen.kt` | Main composable. Animated collapsing top nav (2-row expanded → 1-row compact on scroll via `compactProgress`). LazyColumn of VerseItems. Back/forward history buttons bottom-left. Settings icon bottom-right → opens `SettingsDialog`. Long-press verse/footnote → toggles bookmark. `navigateToVerse()` scrolls to a verse and optionally auto-expands its footnotes. |
+| `app/.../ui/reading/VerseItem.kt` | Verse row. Superscript verse number, gold dot for footnotes, tap to expand. Gold left border when expanded. Long-press to bookmark. Only tappable if `hasFootnotes`. |
+| `app/.../ui/reading/FootnoteSection.kt` | AnimatedVisibility. Gold keyword prefix, muted content text. Long-press to bookmark individual footnotes. |
 | `app/.../ui/navigation/NavigationBottomSheet.kt` | ModalBottomSheet with TabRow (Books/Chapters). Books: 3-col grid, OT/NT sections. Chapters: 6-col square grid. Selecting a book auto-switches to Chapters tab. Accepts `initialTab` param so chapter button opens directly to chapters. |
+| `app/.../ui/bookmarks/BookmarkViewModel.kt` | Lists all bookmarks via `BookmarkRepository`. `expandedBookmarkId` for accordion expansion. `deleteBookmark()`. |
+| `app/.../ui/bookmarks/BookmarkScreen.kt` | Full-screen bookmark list. Tapping a bookmark calls `ReadingViewModel.navigateToVerse()` to jump there. |
+| `app/.../ui/bookmarks/BookmarkItem.kt` | Single bookmark row. Shows book/chapter/verse reference, preview text, keyword for footnote bookmarks. Swipe or button to delete. |
+| `app/.../ui/search/SearchViewModel.kt` | `SearchUiState` with query, scope, includeFootnotes, results, isSearching. Debounces input 300ms before querying. Scope: ALL/OT/NT/THIS_BOOK. |
+| `app/.../ui/search/SearchScreen.kt` | Search UI. Text field, scope chips, footnote toggle, result list. Tapping a result calls `ReadingViewModel.navigateToVerse()`. |
+| `app/.../ui/search/SearchResultItem.kt` | Single search result row showing reference and matched text. |
 | `app/.../ui/settings/UserSettings.kt` | Data class + enums: `ThemeMode` (SYSTEM/LIGHT/DARK), `TextSize` (SMALL 15sp/MEDIUM 17sp/LARGE 20sp). |
 | `app/.../ui/settings/SettingsViewModel.kt` | `AndroidViewModel` managing `UserSettings` via `rcv_reader_settings` SharedPreferences. Exposes `StateFlow<UserSettings>`. |
-| `app/.../ui/settings/SettingsPanel.kt` | Slide-in drawer (right edge). Theme mode chips and text size chips with gold accent styling. |
+| `app/.../ui/settings/SettingsDialog.kt` | Modal `Dialog` (not a drawer). Theme mode chips and text size chips with gold accent styling. Opened from settings icon in `ReadingScreen`. |
 | `app/.../ui/theme/Color.kt` | Light: bg #FAF8F4, primary #8B6914. Dark: bg #1A1715, primary #C49B5E. Shared: GoldAccent, VerseDotColor, FootnoteHighlight. |
 | `app/.../ui/theme/Type.kt` | Serif body text (16sp/30sp line height). Sans-serif for titles/labels. |
 | `app/.../ui/theme/Theme.kt` | `RCVReaderTheme` composable. Accepts `darkTheme` param (resolved in `MainActivity` from `SettingsViewModel`). |
@@ -80,6 +93,10 @@ Two separate SharedPreferences stores:
 4. **Verse expansion uses verse ID** (not verse_number) for robustness. The `expandedVerseId` in `ReadingUiState` maps to `Verse.id`.
 
 5. **Book selection is two-step**: `selectBook()` sets `pendingBook`, navigation deferred until chapter is picked. This prevents loading chapter 1 prematurely.
+
+6. **FTS5 virtual tables required**: `bible.db` must contain `verses_fts` and `footnotes_fts` virtual tables. Search uses `@RawQuery` with BM25 ranking (`ORDER BY bm25(...)`). If you regenerate `bible.db`, ensure these tables are included in `CREATE_TABLES_SQL` in `import_bible_data.py`.
+
+7. **Two Room databases**: `bible.db` (read-only asset, `BibleDatabase`) and `bookmarks.db` (user-writable, `BookmarkDatabase`) are separate singleton instances. Never mix their DAOs.
 
 ## Web Version Key Files
 
