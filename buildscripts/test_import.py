@@ -62,6 +62,20 @@ def test_extract_2john():
     assert extract_verse_text(line) == "The elder to the chosen lady."
 
 
+def test_extract_decodes_html_entities():
+    line = "Isa. 25:1 wonderful things&mdash; / Counsels of old"
+    result = extract_verse_text(line)
+    assert "&mdash;" not in result
+    assert "\u2014" in result
+
+
+def test_extract_decodes_hellip():
+    line = "Rev. 1:1 things&hellip; more text"
+    result = extract_verse_text(line)
+    assert "&hellip;" not in result
+    assert "\u2026" in result
+
+
 from import_bible_data import parse_footnote_content
 
 
@@ -127,6 +141,18 @@ def test_build_database_creates_all_tables(bible_db):
     cursor.execute("SELECT COUNT(*) FROM verses")
     total = cursor.fetchone()[0]
     assert total > 30000
+    conn.close()
+
+
+def test_verses_have_no_html_entities(bible_db):
+    conn = sqlite3.connect(bible_db)
+    cursor = conn.cursor()
+    cursor.execute("SELECT COUNT(*) FROM verses WHERE text LIKE '%&mdash;%' OR text LIKE '%&hellip;%'")
+    assert cursor.fetchone()[0] == 0, "HTML entities should be decoded during import"
+    # Isaiah 25:1 specifically uses &mdash; in the source
+    cursor.execute("SELECT text FROM verses WHERE book_id = 23 AND chapter = 25 AND verse_number = 1")
+    text = cursor.fetchone()[0]
+    assert "\u2014" in text
     conn.close()
 
 
